@@ -6,7 +6,6 @@ test('Installation', async ({ page }) => {
   const response = await page.request.get(URL);
   expect(response.status()).toBe(200);
   await expect(page).toHaveTitle(/Playwright/);
-  await page.locator('h1').click();
   await page.getByRole('link', { name: 'Installation' }).click();
   await expect(page.getByRole('heading', { name: 'Installation' })).toHaveText('Installation');
   await expect(page.getByRole('heading', { name: 'Installing Playwright#'})).toHaveText('Installing Playwright');
