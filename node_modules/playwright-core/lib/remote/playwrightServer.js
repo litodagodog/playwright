@@ -45,10 +45,6 @@ class PlaywrightServer {
     if (options.preLaunchedBrowser) this._preLaunchedPlaywright = options.preLaunchedBrowser.options.rootSdkObject;
     if (options.preLaunchedAndroidDevice) this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android._playwrightOptions.rootSdkObject;
   }
-  preLaunchedPlaywright() {
-    if (!this._preLaunchedPlaywright) this._preLaunchedPlaywright = (0, _playwright.createPlaywright)('javascript');
-    return this._preLaunchedPlaywright;
-  }
   async listen(port = 0) {
     const server = _http.default.createServer((request, response) => {
       if (request.method === 'GET' && request.url === '/json') {
@@ -97,7 +93,6 @@ class PlaywrightServer {
       const browserName = url.searchParams.get('browser') || (Array.isArray(browserHeader) ? browserHeader[0] : browserHeader) || null;
       const proxyHeader = request.headers['x-playwright-proxy'];
       const proxyValue = url.searchParams.get('proxy') || (Array.isArray(proxyHeader) ? proxyHeader[0] : proxyHeader);
-      const enableSocksProxy = this._options.browserProxyMode !== 'disabled' && proxyValue === '*';
       const launchOptionsHeader = request.headers['x-playwright-launch-options'] || '';
       let launchOptions = {};
       try {
@@ -110,8 +105,10 @@ class PlaywrightServer {
       const shouldReuseBrowser = !!request.headers['x-playwright-reuse-context'];
 
       // If we started in the legacy reuse-browser mode, create this._preLaunchedPlaywright.
-      // If we get a reuse-controller request,  create this._preLaunchedPlaywright.
-      if (isDebugControllerClient || shouldReuseBrowser) this.preLaunchedPlaywright();
+      // If we get a reuse-controller request, create this._preLaunchedPlaywright.
+      if (isDebugControllerClient || shouldReuseBrowser) {
+        if (!this._preLaunchedPlaywright) this._preLaunchedPlaywright = (0, _playwright.createPlaywright)('javascript');
+      }
       let clientType = 'playwright';
       let semaphore = browserSemaphore;
       if (isNetworkTetheringClient) {
@@ -124,7 +121,7 @@ class PlaywrightServer {
         clientType = 'reuse-browser';
         semaphore = reuseBrowserSemaphore;
       } else if (this._options.preLaunchedBrowser || this._options.preLaunchedAndroidDevice) {
-        clientType = 'pre-launched-browser';
+        clientType = 'pre-launched-browser-or-android';
         semaphore = browserSemaphore;
       } else if (browserName) {
         clientType = 'launch-browser';
@@ -132,14 +129,15 @@ class PlaywrightServer {
       }
       if (clientType === 'network-tethering' && this._options.ownedByTetherClient) clearTimeout(this._networkTetheringClientTimeout);
       const connection = new _playwrightConnection.PlaywrightConnection(semaphore.aquire(), clientType, ws, {
-        enableSocksProxy,
+        socksProxyPattern: proxyValue,
         browserName,
         launchOptions
       }, {
         playwright: this._preLaunchedPlaywright,
         browser: this._options.preLaunchedBrowser,
         androidDevice: this._options.preLaunchedAndroidDevice,
-        networkTetheringSocksProxy: this._networkTetheringSocksProxy
+        ownedSocksProxy: this._options.preLaunchedSocksProxy,
+        sharedSocksProxy: this._networkTetheringSocksProxy
       }, log, () => {
         semaphore.release();
         if (this._options.ownedByTetherClient && clientType === 'network-tethering') this.close();

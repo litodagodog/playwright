@@ -43,7 +43,6 @@ class Keyboard {
     if (kModifiers.includes(description.key)) this._pressedModifiers.add(description.key);
     const text = description.text;
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
-    await this._page._doSlowMo();
   }
   _keyDescriptionForString(keyString) {
     let description = usKeyboardLayout.get(keyString);
@@ -63,11 +62,9 @@ class Keyboard {
     if (kModifiers.includes(description.key)) this._pressedModifiers.delete(description.key);
     this._pressedKeys.delete(description.code);
     await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
-    await this._page._doSlowMo();
   }
   async insertText(text) {
     await this._raw.sendText(text);
-    await this._page._doSlowMo();
   }
   async type(text, options) {
     const delay = options && options.delay || undefined;
@@ -154,7 +151,6 @@ class Mouse {
       const middleX = fromX + (x - fromX) * (i / steps);
       const middleY = fromY + (y - fromY) * (i / steps);
       await this._raw.move(middleX, middleY, this._lastButton, this._buttons, this._keyboard._modifiers(), !!options.forClick);
-      await this._page._doSlowMo();
     }
   }
   async down(options = {}) {
@@ -165,7 +161,6 @@ class Mouse {
     this._lastButton = button;
     this._buttons.add(button);
     await this._raw.down(this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
-    await this._page._doSlowMo();
   }
   async up(options = {}) {
     const {
@@ -175,7 +170,6 @@ class Mouse {
     this._lastButton = 'none';
     this._buttons.delete(button);
     await this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
-    await this._page._doSlowMo();
   }
   async click(x, y, options = {}) {
     const {
@@ -224,7 +218,6 @@ class Mouse {
   }
   async wheel(deltaX, deltaY) {
     await this._raw.wheel(this._x, this._y, this._buttons, this._keyboard._modifiers(), deltaX, deltaY);
-    await this._page._doSlowMo();
   }
 }
 exports.Mouse = Mouse;
@@ -291,7 +284,6 @@ class Touchscreen {
   async tap(x, y) {
     if (!this._page._browserContext._options.hasTouch) throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
     await this._raw.tap(x, y, this._page.keyboard._modifiers());
-    await this._page._doSlowMo();
   }
 }
 exports.Touchscreen = Touchscreen;

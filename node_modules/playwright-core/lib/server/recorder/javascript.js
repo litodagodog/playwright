@@ -6,10 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.JavaScriptLanguageGenerator = exports.JavaScriptFormatter = void 0;
 var _language = require("./language");
 var _utils = require("./utils");
-var _deviceDescriptors = _interopRequireDefault(require("../deviceDescriptors"));
 var _stringUtils = require("../../utils/isomorphic/stringUtils");
 var _locatorGenerators = require("../isomorphic/locatorGenerators");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -26,6 +24,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * limitations under the License.
  */
 
+const deviceDescriptors = require('../deviceDescriptorsSource.json');
 class JavaScriptLanguageGenerator {
   constructor(isTest) {
     this.id = void 0;
@@ -69,25 +68,12 @@ class JavaScriptLanguageGenerator {
     dialog.dismiss().catch(() => {});
   });`);
     }
-    const emitPromiseAll = signals.popup || signals.download;
-    if (emitPromiseAll) {
-      // Generate either await Promise.all([]) or
-      // const [popup1] = await Promise.all([]).
-      let leftHandSide = '';
-      if (signals.popup) leftHandSide = `const [${signals.popup.popupAlias}] = `;else if (signals.download) leftHandSide = `const [download] = `;
-      formatter.add(`${leftHandSide}await Promise.all([`);
-    }
-
-    // Popup signals.
-    if (signals.popup) formatter.add(`${pageAlias}.waitForEvent('popup'),`);
-
-    // Download signals.
-    if (signals.download) formatter.add(`${pageAlias}.waitForEvent('download'),`);
-    const prefix = signals.popup || signals.download ? '' : 'await ';
+    if (signals.popup) formatter.add(`const ${signals.popup.popupAlias}Promise = ${pageAlias}.waitForEvent('popup');`);
+    if (signals.download) formatter.add(`const download${signals.download.downloadAlias}Promise = ${pageAlias}.waitForEvent('download');`);
     const actionCall = this._generateActionCall(action);
-    const suffix = emitPromiseAll ? '' : ';';
-    formatter.add(`${prefix}${subject}.${actionCall}${suffix}`);
-    if (emitPromiseAll) formatter.add(`]);`);
+    formatter.add(`await ${subject}.${actionCall};`);
+    if (signals.popup) formatter.add(`const ${signals.popup.popupAlias} = await ${signals.popup.popupAlias}Promise;`);
+    if (signals.download) formatter.add(`const download${signals.download.downloadAlias} = await download${signals.download.downloadAlias}Promise;`);
     return formatter.format();
   }
   _generateActionCall(action) {
@@ -193,7 +179,7 @@ function formatObjectOrVoid(value, indent = '  ') {
   return result === '{}' ? '' : result;
 }
 function formatContextOptions(options, deviceName) {
-  const device = deviceName && _deviceDescriptors.default[deviceName];
+  const device = deviceName && deviceDescriptors[deviceName];
   if (!device) return formatObjectOrVoid(options);
   // Filter out all the properties from the device descriptor.
   let serializedObject = formatObjectOrVoid((0, _language.sanitizeDeviceOptions)(device, options));

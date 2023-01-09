@@ -174,6 +174,16 @@ class Frame extends _channelOwner.ChannelOwner {
     });
     return (0, _jsHandle.parseResult)(result.value);
   }
+  async _evaluateExposeUtilityScript(pageFunction, arg) {
+    (0, _jsHandle.assertMaxArguments)(arguments.length, 2);
+    const result = await this._channel.evaluateExpression({
+      expression: String(pageFunction),
+      isFunction: typeof pageFunction === 'function',
+      exposeUtilityScript: true,
+      arg: (0, _jsHandle.serializeArgument)(arg)
+    });
+    return (0, _jsHandle.parseResult)(result.value);
+  }
   async $(selector, options) {
     const result = await this._channel.querySelector({
       selector,

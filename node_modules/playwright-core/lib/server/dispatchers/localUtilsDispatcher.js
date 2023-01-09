@@ -145,12 +145,15 @@ class LocalUtilsDispatcher extends _dispatcher.Dispatcher {
     const controller = new _progress.ProgressController(metadata, this._object);
     controller.setLogName('browser');
     return await controller.run(async progress => {
-      const paramsHeaders = Object.assign({
-        'User-Agent': (0, _userAgent.getUserAgent)()
-      }, params.headers || {});
+      var _params$exposeNetwork;
+      const wsHeaders = {
+        'User-Agent': (0, _userAgent.getUserAgent)(),
+        'x-playwright-proxy': (_params$exposeNetwork = params.exposeNetwork) !== null && _params$exposeNetwork !== void 0 ? _params$exposeNetwork : '',
+        ...params.headers
+      };
       const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
-      const transport = await _transport.WebSocketTransport.connect(progress, wsEndpoint, paramsHeaders, true);
-      const socksInterceptor = new _socksInterceptor.SocksInterceptor(transport, params.socksProxyRedirectPortForTest);
+      const transport = await _transport.WebSocketTransport.connect(progress, wsEndpoint, wsHeaders, true);
+      const socksInterceptor = new _socksInterceptor.SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
       const pipe = new _jsonPipeDispatcher.JsonPipeDispatcher(this);
       transport.onmessage = json => {
         if (socksInterceptor.interceptMessage(json)) return;

@@ -8,6 +8,7 @@ exports.escapeForAttributeSelector = escapeForAttributeSelector;
 exports.escapeForTextSelector = escapeForTextSelector;
 exports.escapeWithQuotes = escapeWithQuotes;
 exports.isString = isString;
+exports.normalizeWhiteSpace = normalizeWhiteSpace;
 exports.toSnakeCase = toSnakeCase;
 exports.toTitleCase = toTitleCase;
 /**
@@ -58,6 +59,9 @@ function cssEscapeOne(s, i) {
   if (i === 0 && c === 0x002d && s.length === 1) return '\\' + s.charAt(i);
   if (c >= 0x0080 || c === 0x002d || c === 0x005f || c >= 0x0030 && c <= 0x0039 || c >= 0x0041 && c <= 0x005a || c >= 0x0061 && c <= 0x007a) return s.charAt(i);
   return '\\' + s.charAt(i);
+}
+function normalizeWhiteSpace(text) {
+  return text.replace(/\u200b/g, '').trim().replace(/\s+/g, ' ');
 }
 function escapeForTextSelector(text, exact) {
   if (typeof text !== 'string') return String(text);

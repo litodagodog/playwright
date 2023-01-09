@@ -79,14 +79,11 @@ class Request extends _channelOwner.ChannelOwner {
     return this._fallbackOverrides.method || this._initializer.method;
   }
   postData() {
-    if (this._fallbackOverrides.postData) return this._fallbackOverrides.postData.toString('utf-8');
+    if (this._fallbackOverrides.postDataBuffer) return this._fallbackOverrides.postDataBuffer.toString('utf-8');
     return this._postData ? this._postData.toString('utf8') : null;
   }
   postDataBuffer() {
-    if (this._fallbackOverrides.postData) {
-      if ((0, _utils.isString)(this._fallbackOverrides.postData)) return Buffer.from(this._fallbackOverrides.postData, 'utf-8');
-      return this._fallbackOverrides.postData;
-    }
+    if (this._fallbackOverrides.postDataBuffer) return this._fallbackOverrides.postDataBuffer;
     return this._postData;
   }
   postDataJSON() {
@@ -184,9 +181,17 @@ class Request extends _channelOwner.ChannelOwner {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }
   _applyFallbackOverrides(overrides) {
+    const basicOptions = {
+      ...overrides,
+      postData: undefined
+    };
+    const postData = overrides.postData;
+    let postDataBuffer = this._fallbackOverrides.postDataBuffer;
+    if ((0, _utils.isString)(postData)) postDataBuffer = Buffer.from(postData, 'utf-8');else if (postData instanceof Buffer) postDataBuffer = postData;else if (postData) postDataBuffer = Buffer.from(JSON.stringify(postData), 'utf-8');
     this._fallbackOverrides = {
       ...this._fallbackOverrides,
-      ...overrides
+      ...basicOptions,
+      postDataBuffer
     };
   }
   _fallbackOverridesForContinue() {
@@ -235,6 +240,16 @@ class Route extends _channelOwner.ChannelOwner {
     }));
     this._reportHandled(true);
   }
+  async fetch(options = {}) {
+    return await this._wrapApiCall(async () => {
+      const context = this.request()._context();
+      return context.request._innerFetch({
+        request: this.request(),
+        data: options.postData,
+        ...options
+      });
+    });
+  }
   async fulfill(options = {}) {
     this._checkNotHandled();
     await this._wrapApiCall(async () => {
@@ -249,6 +264,10 @@ class Route extends _channelOwner.ChannelOwner {
       headers: headersOption,
       body
     } = options;
+    if (options.json !== undefined) {
+      (0, _utils.assert)(options.body === undefined, 'Can specify either body or json parameters');
+      body = JSON.stringify(options.json);
+    }
     if (options.response instanceof _fetch.APIResponse) {
       var _statusOption, _headersOption;
       (_statusOption = statusOption) !== null && _statusOption !== void 0 ? _statusOption : statusOption = options.response.status();
@@ -274,7 +293,7 @@ class Route extends _channelOwner.ChannelOwner {
     }
     const headers = {};
     for (const header of Object.keys(headersOption || {})) headers[header.toLowerCase()] = String(headersOption[header]);
-    if (options.contentType) headers['content-type'] = String(options.contentType);else if (options.path) headers['content-type'] = _utilsBundle.mime.getType(options.path) || 'application/octet-stream';
+    if (options.contentType) headers['content-type'] = String(options.contentType);else if (options.json) headers['content-type'] = 'application/json';else if (options.path) headers['content-type'] = _utilsBundle.mime.getType(options.path) || 'application/octet-stream';
     if (length && !('content-length' in headers)) headers['content-length'] = String(length);
     await this._raceWithTargetClose(this._channel.fulfill({
       status: statusOption || 200,
@@ -301,12 +320,11 @@ class Route extends _channelOwner.ChannelOwner {
   async _innerContinue(internal = false) {
     const options = this.request()._fallbackOverridesForContinue();
     return await this._wrapApiCall(async () => {
-      const postDataBuffer = (0, _utils.isString)(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
       await this._raceWithTargetClose(this._channel.continue({
         url: options.url,
         method: options.method,
         headers: options.headers ? (0, _utils.headersObjectToArray)(options.headers) : undefined,
-        postData: postDataBuffer
+        postData: options.postDataBuffer
       }));
     }, !!internal);
   }

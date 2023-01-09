@@ -27,12 +27,12 @@ function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && 
  */
 
 class SocksInterceptor {
-  constructor(transport, redirectPortForTest) {
+  constructor(transport, pattern, redirectPortForTest) {
     this._handler = void 0;
     this._channel = void 0;
     this._socksSupportObjectGuid = void 0;
     this._ids = new Set();
-    this._handler = new socks.SocksProxyHandler(redirectPortForTest);
+    this._handler = new socks.SocksProxyHandler(pattern, redirectPortForTest);
     let lastId = -1;
     this._channel = new Proxy(new _events.default(), {
       get: (obj, prop) => {

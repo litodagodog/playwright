@@ -7,9 +7,7 @@ exports.CSharpLanguageGenerator = void 0;
 var _language = require("./language");
 var _utils = require("./utils");
 var _stringUtils = require("../../utils/isomorphic/stringUtils");
-var _deviceDescriptors = _interopRequireDefault(require("../deviceDescriptors"));
 var _locatorGenerators = require("../isomorphic/locatorGenerators");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -26,6 +24,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * limitations under the License.
  */
 
+const deviceDescriptors = require('../deviceDescriptorsSource.json');
 class CSharpLanguageGenerator {
   constructor(mode) {
     this.id = void 0;
@@ -262,7 +261,7 @@ function convertContextOptions(options) {
   return result;
 }
 function formatContextOptions(options, deviceName) {
-  const device = deviceName && _deviceDescriptors.default[deviceName];
+  const device = deviceName && deviceDescriptors[deviceName];
   if (!device) {
     if (!Object.entries(options).length) return '';
     return formatObject(convertContextOptions(options), '    ', 'BrowserNewContextOptions');

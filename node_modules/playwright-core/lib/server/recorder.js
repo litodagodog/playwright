@@ -75,7 +75,7 @@ class Recorder {
     this._contextRecorder = new ContextRecorder(context, params);
     this._context = context;
     this._omitCallTracking = !!params.omitCallTracking;
-    this._debugger = _debugger.Debugger.lookup(context);
+    this._debugger = context.debugger();
     this._handleSIGINT = params.handleSIGINT;
     context.instrumentation.addListener(this, context);
     this._currentLanguage = this._contextRecorder.languageName();
@@ -152,7 +152,7 @@ class Recorder {
         actionPoint,
         actionSelector,
         language: this._currentLanguage,
-        testIdAttributeName: this._contextRecorder.testIdAttributeName()
+        testIdAttributeName: this._context.selectors().testIdAttributeName()
       };
       return uiState;
     });
@@ -197,15 +197,12 @@ class Recorder {
     this._debugger.resume(false);
   }
   setHighlightedSelector(language, selector) {
-    this._highlightedSelector = (0, _locatorParser.locatorOrSelectorAsSelector)(language, selector, this._contextRecorder.testIdAttributeName());
+    this._highlightedSelector = (0, _locatorParser.locatorOrSelectorAsSelector)(language, selector, this._context.selectors().testIdAttributeName());
     this._refreshOverlay();
   }
   hideHighlightedSelecor() {
     this._highlightedSelector = '';
     this._refreshOverlay();
-  }
-  setTestIdAttributeName(testIdAttributeName) {
-    this._contextRecorder.setTestIdAttributeName(testIdAttributeName);
   }
   setOutput(codegenId, outputFile) {
     this._contextRecorder.setOutput(codegenId, outputFile);
@@ -310,8 +307,8 @@ class ContextRecorder extends _events.EventEmitter {
     this._generator = void 0;
     this._pageAliases = new Map();
     this._lastPopupOrdinal = 0;
-    this._lastDialogOrdinal = 0;
-    this._lastDownloadOrdinal = 0;
+    this._lastDialogOrdinal = -1;
+    this._lastDownloadOrdinal = -1;
     this._timers = new Set();
     this._context = void 0;
     this._params = void 0;
@@ -365,12 +362,6 @@ class ContextRecorder extends _events.EventEmitter {
       (_this$_throttledOutpu3 = this._throttledOutputFile) === null || _this$_throttledOutpu3 === void 0 ? void 0 : _this$_throttledOutpu3.flush();
     });
     this._generator = generator;
-  }
-  testIdAttributeName() {
-    return this._testIdAttributeName;
-  }
-  setTestIdAttributeName(testIdAttributeName) {
-    this._testIdAttributeName = testIdAttributeName;
   }
   setOutput(codegenId, outputFile) {
     var _this$_generator;
@@ -612,16 +603,18 @@ class ContextRecorder extends _events.EventEmitter {
   }
   _onDownload(page) {
     const pageAlias = this._pageAliases.get(page);
+    ++this._lastDownloadOrdinal;
     this._generator.signal(pageAlias, page.mainFrame(), {
       name: 'download',
-      downloadAlias: String(++this._lastDownloadOrdinal)
+      downloadAlias: this._lastDownloadOrdinal ? String(this._lastDownloadOrdinal) : ''
     });
   }
   _onDialog(page) {
     const pageAlias = this._pageAliases.get(page);
+    ++this._lastDialogOrdinal;
     this._generator.signal(pageAlias, page.mainFrame(), {
       name: 'dialog',
-      dialogAlias: String(++this._lastDialogOrdinal)
+      dialogAlias: this._lastDialogOrdinal ? String(this._lastDialogOrdinal) : ''
     });
   }
 }

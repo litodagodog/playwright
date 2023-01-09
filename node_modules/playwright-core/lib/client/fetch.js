@@ -11,7 +11,7 @@ var _errors = require("../common/errors");
 var _utils = require("../utils");
 var _fileUtils = require("../utils/fileUtils");
 var _channelOwner = require("./channelOwner");
-var network = _interopRequireWildcard(require("./network"));
+var _network = require("./network");
 var _clientInstrumentation = require("./clientInstrumentation");
 var _tracing = require("./tracing");
 let _util$inspect$custom;
@@ -96,17 +96,26 @@ class APIRequestContext extends _channelOwner.ChannelOwner {
     });
   }
   async fetch(urlOrRequest, options = {}) {
+    const url = (0, _utils.isString)(urlOrRequest) ? urlOrRequest : undefined;
+    const request = (0, _utils.isString)(urlOrRequest) ? undefined : urlOrRequest;
+    return this._innerFetch({
+      url,
+      request,
+      ...options
+    });
+  }
+  async _innerFetch(options = {}) {
     return this._wrapApiCall(async () => {
-      const request = urlOrRequest instanceof network.Request ? urlOrRequest : undefined;
-      (0, _utils.assert)(request || typeof urlOrRequest === 'string', 'First argument must be either URL string or Request');
+      var _options$request, _options$request2, _options$request3;
+      (0, _utils.assert)(options.request || typeof options.url === 'string', 'First argument must be either URL string or Request');
       (0, _utils.assert)((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
       (0, _utils.assert)(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' should be greater than or equal to '0'`);
-      const url = request ? request.url() : urlOrRequest;
+      const url = options.url !== undefined ? options.url : options.request.url();
       const params = (0, _utils.objectToArray)(options.params);
-      const method = options.method || (request === null || request === void 0 ? void 0 : request.method());
+      const method = options.method || ((_options$request = options.request) === null || _options$request === void 0 ? void 0 : _options$request.method());
       const maxRedirects = options.maxRedirects;
       // Cannot call allHeaders() here as the request may be paused inside route handler.
-      const headersObj = options.headers || (request === null || request === void 0 ? void 0 : request.headers());
+      const headersObj = options.headers || ((_options$request2 = options.request) === null || _options$request2 === void 0 ? void 0 : _options$request2.headers());
       const headers = headersObj ? (0, _utils.headersObjectToArray)(headersObj) : undefined;
       let jsonData;
       let formData;
@@ -148,7 +157,7 @@ class APIRequestContext extends _channelOwner.ChannelOwner {
           }
         }
       }
-      if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined) postDataBuffer = (request === null || request === void 0 ? void 0 : request.postDataBuffer()) || undefined;
+      if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined) postDataBuffer = ((_options$request3 = options.request) === null || _options$request3 === void 0 ? void 0 : _options$request3.postDataBuffer()) || undefined;
       const result = await this._channel.fetch({
         url,
         params,
@@ -184,7 +193,7 @@ class APIResponse {
     this._request = void 0;
     this._request = context;
     this._initializer = initializer;
-    this._headers = new network.RawHeaders(this._initializer.headers);
+    this._headers = new _network.RawHeaders(this._initializer.headers);
   }
   ok() {
     return this._initializer.status >= 200 && this._initializer.status <= 299;

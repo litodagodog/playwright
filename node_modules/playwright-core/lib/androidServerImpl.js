@@ -47,7 +47,7 @@ class AndroidServerLauncherImpl {
       path,
       maxConnections: 1,
       preLaunchedAndroidDevice: device,
-      browserProxyMode: 'disabled'
+      browserProxyMode: 'client'
     });
     const wsEndpoint = await server.listen(options.port);
 

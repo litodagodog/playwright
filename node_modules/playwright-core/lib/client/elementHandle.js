@@ -248,8 +248,8 @@ function convertSelectOptionValues(values) {
     elements: values.map(v => v._elementChannel)
   };
   if ((0, _utils.isString)(values[0])) return {
-    options: values.map(value => ({
-      value
+    options: values.map(valueOrLabel => ({
+      valueOrLabel
     }))
   };
   return {

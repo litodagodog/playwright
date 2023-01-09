@@ -60,17 +60,23 @@ class FrameExecutionContext extends js.ExecutionContext {
   async evaluateHandle(pageFunction, arg) {
     return js.evaluate(this, false /* returnByValue */, pageFunction, arg);
   }
-  async evaluateExpression(expression, isFunction, arg) {
-    return js.evaluateExpression(this, true /* returnByValue */, expression, isFunction, arg);
+  async evaluateExpression(expression, options, arg) {
+    return js.evaluateExpression(this, expression, {
+      ...options,
+      returnByValue: true
+    }, arg);
   }
-  async evaluateExpressionAndWaitForSignals(expression, isFunction, arg) {
+  async evaluateExpressionAndWaitForSignals(expression, options, arg) {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return this.evaluateExpression(expression, isFunction, arg);
+      return this.evaluateExpression(expression, options, arg);
     });
   }
-  async evaluateExpressionHandleAndWaitForSignals(expression, isFunction, arg) {
+  async evaluateExpressionHandleAndWaitForSignals(expression, options, arg) {
     return await this.frame._page._frameManager.waitForSignalsCreatedBy(null, false /* noWaitFor */, async () => {
-      return js.evaluateExpression(this, false /* returnByValue */, expression, isFunction, arg);
+      return js.evaluateExpression(this, expression, {
+        ...options,
+        returnByValue: false
+      }, arg);
     });
   }
   createHandle(remoteObject) {
@@ -102,14 +108,12 @@ class FrameExecutionContext extends js.ExecutionContext {
     }
     return this._injectedScriptPromise;
   }
-  async doSlowMo() {
-    return this.frame._page._doSlowMo();
-  }
 }
 exports.FrameExecutionContext = FrameExecutionContext;
 class ElementHandle extends js.JSHandle {
   constructor(context, objectId) {
     super(context, 'node', undefined, objectId);
+    this.__elementhandle = true;
     this._page = void 0;
     this._frame = void 0;
     this._page = context.frame._page;
@@ -226,7 +230,6 @@ class ElementHandle extends js.JSHandle {
         eventInit
       }]);
     });
-    await this._page._doSlowMo();
   }
   async _scrollRectIntoViewIfNeeded(rect) {
     return await this._page._delegate.scrollRectIntoViewIfNeeded(this, rect);
@@ -507,7 +510,6 @@ class ElementHandle extends js.JSHandle {
         optionsToSelect,
         force: options.force
       });
-      await this._page._doSlowMo();
       return result;
     });
   }
@@ -592,14 +594,12 @@ class ElementHandle extends js.JSHandle {
       progress.throwIfAborted(); // Avoid action that has side-effects.
       if (localPaths) await this._page._delegate.setInputFilePaths(retargeted, localPaths);else await this._page._delegate.setInputFiles(retargeted, filePayloads);
     });
-    await this._page._doSlowMo();
     return 'done';
   }
   async focus(metadata) {
     const controller = new _progress.ProgressController(metadata, this);
     await controller.run(async progress => {
       const result = await this._focus(progress);
-      await this._page._doSlowMo();
       return assertDone(throwRetargetableDOMError(result));
     }, 0);
   }
@@ -793,11 +793,20 @@ class ElementHandle extends js.JSHandle {
     while (frame.parentFrame()) {
       const frameElement = await frame.frameElement();
       const box = await frameElement.boundingBox();
-      if (!box) return 'error:notconnected';
+      const style = await frameElement.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe), {}).catch(e => 'error:notconnected');
+      if (!box || style === 'error:notconnected') return 'error:notconnected';
+      if (style === 'transformed') {
+        // We cannot translate coordinates when iframe has any transform applied.
+        // The best we can do right now is to skip the hitPoint check,
+        // and solely rely on the event interceptor.
+        return {
+          framePoint: undefined
+        };
+      }
       // Translate from viewport coordinates to frame coordinates.
       const pointInFrame = {
-        x: point.x - box.x,
-        y: point.y - box.y
+        x: point.x - box.x - style.borderLeft,
+        y: point.y - box.y - style.borderTop
       };
       data.push({
         frame,

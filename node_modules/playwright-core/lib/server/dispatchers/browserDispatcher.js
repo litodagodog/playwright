@@ -47,7 +47,7 @@ class BrowserDispatcher extends _dispatcher.Dispatcher {
     };
   }
   async newContextForReuse(params, metadata) {
-    return newContextForReuse(this._object, this, params, null, metadata);
+    return await newContextForReuse(this._object, this, params, null, metadata);
   }
   async close() {
     await this._object.close();
@@ -102,7 +102,7 @@ class ConnectedBrowserDispatcher extends _dispatcher.Dispatcher {
     };
   }
   async newContextForReuse(params, metadata) {
-    return newContextForReuse(this._object, this, params, this.selectors, metadata);
+    return await newContextForReuse(this._object, this, params, this.selectors, metadata);
   }
   async close() {
     // Client should not send us Browser.close.

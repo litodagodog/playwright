@@ -82,7 +82,10 @@ class FrameDispatcher extends _dispatcher.Dispatcher {
   }
   async evaluateExpression(params, metadata) {
     return {
-      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evaluateExpressionAndWaitForSignals(params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg), 'main'))
+      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evaluateExpressionAndWaitForSignals(params.expression, {
+        isFunction: params.isFunction,
+        exposeUtilityScript: params.exposeUtilityScript
+      }, (0, _jsHandleDispatcher.parseArgument)(params.arg), 'main'))
     };
   }
   async evaluateExpressionHandle(params, metadata) {

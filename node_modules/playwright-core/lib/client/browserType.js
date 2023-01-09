@@ -53,7 +53,7 @@ class BrowserType extends _channelOwner.ChannelOwner {
   }
   async launch(options = {}) {
     var _this$_defaultLaunchO;
-    if (this._defaultConnectOptions) return await this._connectInsteadOfLaunching();
+    if (this._defaultConnectOptions) return await this._connectInsteadOfLaunching(this._defaultConnectOptions);
     const logger = options.logger || ((_this$_defaultLaunchO = this._defaultLaunchOptions) === null || _this$_defaultLaunchO === void 0 ? void 0 : _this$_defaultLaunchO.logger);
     (0, _utils.assert)(!options.userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     (0, _utils.assert)(!options.port, 'Cannot specify a port without launching as a server.');
@@ -74,15 +74,16 @@ class BrowserType extends _channelOwner.ChannelOwner {
       return browser;
     });
   }
-  async _connectInsteadOfLaunching() {
+  async _connectInsteadOfLaunching(connectOptions) {
     var _connectOptions$timeo;
-    const connectOptions = this._defaultConnectOptions;
-    return this._connect(connectOptions.wsEndpoint, {
+    return this._connect({
+      wsEndpoint: connectOptions.wsEndpoint,
       headers: {
-        'x-playwright-browser': this.name(),
         'x-playwright-launch-options': JSON.stringify(this._defaultLaunchOptions || {}),
         ...connectOptions.headers
       },
+      _exposeNetwork: connectOptions._exposeNetwork,
+      slowMo: connectOptions.slowMo,
       timeout: (_connectOptions$timeo = connectOptions.timeout) !== null && _connectOptions$timeo !== void 0 ? _connectOptions$timeo : 3 * 60 * 1000 // 3 minutes
     });
   }
@@ -125,11 +126,14 @@ class BrowserType extends _channelOwner.ChannelOwner {
     });
   }
   async connect(optionsOrWsEndpoint, options) {
-    if (typeof optionsOrWsEndpoint === 'string') return this._connect(optionsOrWsEndpoint, options);
+    if (typeof optionsOrWsEndpoint === 'string') return this._connect({
+      ...options,
+      wsEndpoint: optionsOrWsEndpoint
+    });
     (0, _utils.assert)(optionsOrWsEndpoint.wsEndpoint, 'options.wsEndpoint is required');
-    return this._connect(optionsOrWsEndpoint.wsEndpoint, optionsOrWsEndpoint);
+    return this._connect(optionsOrWsEndpoint);
   }
-  async _connect(wsEndpoint, params = {}) {
+  async _connect(params) {
     const logger = params.logger;
     return await this._wrapApiCall(async () => {
       const deadline = params.timeout ? (0, _utils.monotonicTime)() + params.timeout : 0;
@@ -139,8 +143,9 @@ class BrowserType extends _channelOwner.ChannelOwner {
       };
       const localUtils = this._connection.localUtils();
       const connectParams = {
-        wsEndpoint,
+        wsEndpoint: params.wsEndpoint,
         headers,
+        exposeNetwork: params._exposeNetwork,
         slowMo: params.slowMo,
         timeout: params.timeout
       };

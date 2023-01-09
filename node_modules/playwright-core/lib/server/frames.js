@@ -468,7 +468,9 @@ class Frame extends _instrumentation.SdkObject {
       var _this$_contextData$ge;
       const context = (_this$_contextData$ge = this._contextData.get(world)) === null || _this$_contextData$ge === void 0 ? void 0 : _this$_contextData$ge.context;
       if (!context) throw new Error('Frame does not yet have the execution context');
-      return context.evaluateExpression(expression, isFunction);
+      return context.evaluateExpression(expression, {
+        isFunction
+      });
     });
   }
   _recalculateNetworkIdle(frameThatAllowsRemovingNetworkIdle) {
@@ -560,7 +562,6 @@ class Frame extends _instrumentation.SdkObject {
     if (!this._firedLifecycleEvents.has(waitUntil)) await _helper.helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, e => e === waitUntil).promise;
     const request = event.newDocument ? event.newDocument.request : undefined;
     const response = request ? request._finalRequest().response() : null;
-    await this._page._doSlowMo();
     return response;
   }
   async _waitForNavigation(progress, requiresNewDocument, options) {
@@ -603,20 +604,21 @@ class Frame extends _instrumentation.SdkObject {
   }
   async evaluateExpressionHandleAndWaitForSignals(expression, isFunction, arg, world = 'main') {
     const context = await this._context(world);
-    const handle = await context.evaluateExpressionHandleAndWaitForSignals(expression, isFunction, arg);
-    if (world === 'main') await this._page._doSlowMo();
+    const handle = await context.evaluateExpressionHandleAndWaitForSignals(expression, {
+      isFunction
+    }, arg);
     return handle;
   }
   async evaluateExpression(expression, isFunction, arg, world = 'main') {
     const context = await this._context(world);
-    const value = await context.evaluateExpression(expression, isFunction, arg);
-    if (world === 'main') await this._page._doSlowMo();
+    const value = await context.evaluateExpression(expression, {
+      isFunction
+    }, arg);
     return value;
   }
-  async evaluateExpressionAndWaitForSignals(expression, isFunction, arg, world = 'main') {
+  async evaluateExpressionAndWaitForSignals(expression, options, arg, world = 'main') {
     const context = await this._context(world);
-    const value = await context.evaluateExpressionAndWaitForSignals(expression, isFunction, arg);
-    if (world === 'main') await this._page._doSlowMo();
+    const value = await context.evaluateExpressionAndWaitForSignals(expression, options, arg);
     return value;
   }
   async querySelector(selector, options) {
@@ -669,7 +671,6 @@ class Frame extends _instrumentation.SdkObject {
       mainWorld: true,
       ...options
     });
-    await this._page._doSlowMo();
   }
   async evalOnSelectorAndWaitForSignals(selector, strict, expression, isFunction, arg) {
     const pair = await this.resolveFrameForSelectorNoWait(selector, {
@@ -754,7 +755,6 @@ class Frame extends _instrumentation.SdkObject {
           tag
         });
         await Promise.all([contentPromise, lifecyclePromise]);
-        await this._page._doSlowMo();
         return null;
       });
     }, this._page._timeoutSettings.navigationTimeout(options));
@@ -993,14 +993,12 @@ class Frame extends _instrumentation.SdkObject {
     const controller = new _progress.ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._focus(progress)));
-      await this._page._doSlowMo();
     }, this._page._timeoutSettings.timeout(options));
   }
   async blur(metadata, selector, options = {}) {
     const controller = new _progress.ProgressController(metadata, this);
     await controller.run(async progress => {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, handle => handle._blur(progress)));
-      await this._page._doSlowMo();
     }, this._page._timeoutSettings.timeout(options));
   }
   async textContent(metadata, selector, options = {}) {
@@ -1143,16 +1141,31 @@ class Frame extends _instrumentation.SdkObject {
     });
   }
   async expect(metadata, selector, options) {
+    let timeout = this._page._timeoutSettings.timeout(options);
+    const start = timeout > 0 ? (0, _utils.monotonicTime)() : 0;
+    const resultOneShot = await this._expectInternal(metadata, selector, options, true, timeout);
+    if (resultOneShot.matches !== options.isNot) return resultOneShot;
+    if (timeout > 0) {
+      const elapsed = (0, _utils.monotonicTime)() - start;
+      timeout -= elapsed;
+    }
+    if (timeout < 0) return {
+      matches: options.isNot,
+      log: metadata.log,
+      timedOut: true
+    };
+    return await this._expectInternal(metadata, selector, options, false, timeout);
+  }
+  async _expectInternal(metadata, selector, options, oneShot, timeout) {
     const controller = new _progress.ProgressController(metadata, this);
     const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
     const mainWorld = options.expression === 'to.have.property';
-    const timeout = this._page._timeoutSettings.timeout(options);
 
     // List all combinations that are satisfied with the detached node(s).
-    let omitAttached = false;
+    let omitAttached = oneShot;
     if (!options.isNot && options.expression === 'to.be.hidden') omitAttached = true;else if (options.isNot && options.expression === 'to.be.visible') omitAttached = true;else if (!options.isNot && options.expression === 'to.have.count' && options.expectedNumber === 0) omitAttached = true;else if (options.isNot && options.expression === 'to.have.count' && options.expectedNumber !== 0) omitAttached = true;else if (!options.isNot && options.expression.endsWith('.array') && options.expectedText.length === 0) omitAttached = true;else if (options.isNot && options.expression.endsWith('.array') && options.expectedText.length > 0) omitAttached = true;
     return controller.run(async outerProgress => {
-      outerProgress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
+      if (oneShot) outerProgress.log(`${metadata.apiName}${timeout ? ` with timeout ${timeout}ms` : ''}`);
       return await this._scheduleRerunnableTaskWithProgress(outerProgress, selector, (progress, element, options, elements) => {
         let result;
         if (options.isArray) {
@@ -1168,7 +1181,9 @@ class Frame extends _instrumentation.SdkObject {
               matches: false
             };
             // When none of the above applies, keep waiting for the element.
-            return progress.continuePolling;
+            return options.oneShot ? {
+              matches: options.isNot
+            } : progress.continuePolling;
           }
           result = progress.injectedScript.expectSingleElement(progress, element, options);
         }
@@ -1177,15 +1192,16 @@ class Frame extends _instrumentation.SdkObject {
           // expect(locator).conditionThatDoesNotMatch
           // expect(locator).not.conditionThatDoesMatch
           progress.setIntermediateResult(result.received);
-          if (!Array.isArray(result.received)) progress.log(`  unexpected value "${result.received}"`);
-          return progress.continuePolling;
+          if (!Array.isArray(result.received)) progress.log(`  unexpected value "${progress.injectedScript.renderUnexpectedValue(options.expression, result.received)}"`);
+          return options.oneShot ? result : progress.continuePolling;
         }
 
         // Reached the expected state!
         return result;
       }, {
         ...options,
-        isArray
+        isArray,
+        oneShot
       }, {
         strict: true,
         querySelectorAll: isArray,
@@ -1194,15 +1210,17 @@ class Frame extends _instrumentation.SdkObject {
         logScale: true,
         ...options
       });
-    }, timeout).catch(e => {
+    }, oneShot ? 0 : timeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || (0, _selectorParser.isInvalidSelectorError)(e)) throw e;
-      return {
-        received: controller.lastIntermediateResult(),
+      const result = {
         matches: options.isNot,
         log: metadata.log
       };
+      const intermediateResult = controller.lastIntermediateResult();
+      if (intermediateResult) result.received = intermediateResult.value;else result.timedOut = true;
+      return result;
     });
   }
   async _waitForFunctionExpression(metadata, expression, isFunction, arg, options, world = 'main') {

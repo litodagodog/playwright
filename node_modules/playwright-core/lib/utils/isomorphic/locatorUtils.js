@@ -32,6 +32,7 @@ function getByAttributeTextSelector(attrName, text, options) {
   return `internal:attr=[${attrName}=${(0, _stringUtils.escapeForAttributeSelector)(text, (options === null || options === void 0 ? void 0 : options.exact) || false)}]`;
 }
 function getByTestIdSelector(testIdAttributeName, testId) {
+  if (!(0, _stringUtils.isString)(testId)) return `internal:testid=[${testIdAttributeName}=${testId}]`;
   return `internal:testid=[${testIdAttributeName}=${(0, _stringUtils.escapeForAttributeSelector)(testId, true)}]`;
 }
 function getByLabelSelector(text, options) {

@@ -274,6 +274,7 @@ _validatorPrimitives.scheme.LocalUtilsHarUnzipResult = (0, _validatorPrimitives.
 _validatorPrimitives.scheme.LocalUtilsConnectParams = (0, _validatorPrimitives.tObject)({
   wsEndpoint: _validatorPrimitives.tString,
   headers: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tAny),
+  exposeNetwork: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
   slowMo: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber),
   timeout: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber),
   socksProxyRedirectPortForTest: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber)
@@ -1013,6 +1014,7 @@ _validatorPrimitives.scheme.PageExpectScreenshotParams = (0, _validatorPrimitive
     selector: _validatorPrimitives.tString
   })),
   comparatorOptions: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tObject)({
+    comparator: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
     maxDiffPixels: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber),
     maxDiffPixelRatio: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber),
     threshold: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber)
@@ -1321,6 +1323,7 @@ _validatorPrimitives.scheme.FrameDispatchEventResult = (0, _validatorPrimitives.
 _validatorPrimitives.scheme.FrameEvaluateExpressionParams = (0, _validatorPrimitives.tObject)({
   expression: _validatorPrimitives.tString,
   isFunction: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tBoolean),
+  exposeUtilityScript: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tBoolean),
   arg: (0, _validatorPrimitives.tType)('SerializedArgument')
 });
 _validatorPrimitives.scheme.FrameEvaluateExpressionResult = (0, _validatorPrimitives.tObject)({
@@ -1489,6 +1492,7 @@ _validatorPrimitives.scheme.FrameSelectOptionParams = (0, _validatorPrimitives.t
   strict: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tBoolean),
   elements: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tArray)((0, _validatorPrimitives.tChannel)(['ElementHandle']))),
   options: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tArray)((0, _validatorPrimitives.tObject)({
+    valueOrLabel: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
     value: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
     label: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
     index: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber)
@@ -1607,6 +1611,7 @@ _validatorPrimitives.scheme.FrameExpectParams = (0, _validatorPrimitives.tObject
 _validatorPrimitives.scheme.FrameExpectResult = (0, _validatorPrimitives.tObject)({
   matches: _validatorPrimitives.tBoolean,
   received: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tType)('SerializedValue')),
+  timedOut: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tBoolean),
   log: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tArray)(_validatorPrimitives.tString))
 });
 _validatorPrimitives.scheme.WorkerInitializer = (0, _validatorPrimitives.tObject)({
@@ -1856,6 +1861,7 @@ _validatorPrimitives.scheme.ElementHandleScrollIntoViewIfNeededResult = (0, _val
 _validatorPrimitives.scheme.ElementHandleSelectOptionParams = (0, _validatorPrimitives.tObject)({
   elements: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tArray)((0, _validatorPrimitives.tChannel)(['ElementHandle']))),
   options: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tArray)((0, _validatorPrimitives.tObject)({
+    valueOrLabel: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
     value: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
     label: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
     index: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tNumber)
@@ -2408,6 +2414,7 @@ _validatorPrimitives.scheme.AndroidDeviceLaunchBrowserParams = (0, _validatorPri
   strictSelectors: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tBoolean),
   serviceWorkers: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tEnum)(['allow', 'block'])),
   pkg: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),
+  args: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tArray)(_validatorPrimitives.tString)),
   proxy: (0, _validatorPrimitives.tOptional)((0, _validatorPrimitives.tObject)({
     server: _validatorPrimitives.tString,
     bypass: (0, _validatorPrimitives.tOptional)(_validatorPrimitives.tString),

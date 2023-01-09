@@ -2,13 +2,20 @@
   "name": "playwright",
   "version": "1.0.0",
   "description": "",
-  "main": "clientAdmin.js",
+  "main": "index.js",
   "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/litodagodog/playwright.git"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/litodagodog/playwright/issues"
+  },
+  "homepage": "https://github.com/litodagodog/playwright#readme",
   "devDependencies": {
-    "@playwright/test": "^1.28.1",
-    "expect-playwright": "^0.8.0"
+    "@playwright/test": "^1.29.2"
   }
 }

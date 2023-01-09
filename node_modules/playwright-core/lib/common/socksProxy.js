@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.SocksProxyHandler = exports.SocksProxy = void 0;
+exports.parsePattern = parsePattern;
 var _dns = _interopRequireDefault(require("dns"));
 var _events = _interopRequireDefault(require("events"));
 var _net = _interopRequireDefault(require("net"));
@@ -265,6 +266,42 @@ function parseIP(address) {
   if (!_net.default.isIPv4(address)) throw new Error('IPv6 is not supported');
   return address.split('.', 4).map(t => +t);
 }
+function starMatchToRegex(pattern) {
+  const source = pattern.split('*').map(s => {
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }).join('.*');
+  return new RegExp('^' + source + '$');
+}
+
+// This follows "Proxy bypass rules" syntax without implicit and negative rules.
+// https://source.chromium.org/chromium/chromium/src/+/main:net/docs/proxy.md;l=331
+function parsePattern(pattern) {
+  if (!pattern) return () => false;
+  const matchers = pattern.split(',').map(token => {
+    const match = token.match(/^(.*?)(?::(\d+))?$/);
+    if (!match) throw new Error(`Unsupported token "${token}" in pattern "${pattern}"`);
+    const tokenPort = match[2] ? +match[2] : undefined;
+    const portMatches = port => tokenPort === undefined || tokenPort === port;
+    let tokenHost = match[1];
+    if (tokenHost === '<loopback>') {
+      return (host, port) => {
+        if (!portMatches(port)) return false;
+        return host === 'localhost' || host.endsWith('.localhost') || host === '127.0.0.1' || host === '[::1]';
+      };
+    }
+    if (tokenHost === '*') return (host, port) => portMatches(port);
+    if (_net.default.isIPv4(tokenHost) || _net.default.isIPv6(tokenHost)) return (host, port) => host === tokenHost && portMatches(port);
+    if (tokenHost[0] === '.') tokenHost = '*' + tokenHost;
+    const tokenRegex = starMatchToRegex(tokenHost);
+    return (host, port) => {
+      if (!portMatches(port)) return false;
+      if (_net.default.isIPv4(host) || _net.default.isIPv6(host)) return false;
+      return !!host.match(tokenRegex);
+    };
+  });
+  return (host, port) => matchers.some(matcher => matcher(host, port));
+}
 class SocksProxy extends _events.default {
   constructor() {
     super();
@@ -273,6 +310,8 @@ class SocksProxy extends _events.default {
     this._sockets = new Set();
     this._closed = false;
     this._port = void 0;
+    this._patternMatcher = () => false;
+    this._directSockets = new Map();
     this._server = new _net.default.Server(socket => {
       const uid = (0, _utils.createGuid)();
       const connection = new SocksConnection(uid, socket, this);
@@ -286,6 +325,44 @@ class SocksProxy extends _events.default {
       this._sockets.add(socket);
       socket.once('close', () => this._sockets.delete(socket));
     });
+  }
+  setPattern(pattern) {
+    try {
+      this._patternMatcher = parsePattern(pattern);
+    } catch (e) {
+      this._patternMatcher = () => false;
+    }
+  }
+  async _handleDirect(request) {
+    try {
+      var _this$_connections$ge4;
+      // TODO: Node.js 17 does resolve localhost to ipv6
+      const {
+        address
+      } = await dnsLookupAsync(request.host === 'localhost' ? '127.0.0.1' : request.host);
+      const socket = await (0, _netUtils.createSocket)(address, request.port);
+      socket.on('data', data => {
+        var _this$_connections$ge;
+        return (_this$_connections$ge = this._connections.get(request.uid)) === null || _this$_connections$ge === void 0 ? void 0 : _this$_connections$ge.sendData(data);
+      });
+      socket.on('error', error => {
+        var _this$_connections$ge2;
+        (_this$_connections$ge2 = this._connections.get(request.uid)) === null || _this$_connections$ge2 === void 0 ? void 0 : _this$_connections$ge2.error(error.message);
+        this._directSockets.delete(request.uid);
+      });
+      socket.on('end', () => {
+        var _this$_connections$ge3;
+        (_this$_connections$ge3 = this._connections.get(request.uid)) === null || _this$_connections$ge3 === void 0 ? void 0 : _this$_connections$ge3.end();
+        this._directSockets.delete(request.uid);
+      });
+      const localAddress = socket.localAddress;
+      const localPort = socket.localPort;
+      this._directSockets.set(request.uid, socket);
+      (_this$_connections$ge4 = this._connections.get(request.uid)) === null || _this$_connections$ge4 === void 0 ? void 0 : _this$_connections$ge4.socketConnected(localAddress, localPort);
+    } catch (error) {
+      var _this$_connections$ge5;
+      (_this$_connections$ge5 = this._connections.get(request.uid)) === null || _this$_connections$ge5 === void 0 ? void 0 : _this$_connections$ge5.socketFailed(error.code);
+    }
   }
   port() {
     return this._port;
@@ -301,18 +378,34 @@ class SocksProxy extends _events.default {
     });
   }
   async close() {
+    if (this._closed) return;
     this._closed = true;
     for (const socket of this._sockets) socket.destroy();
     this._sockets.clear();
     await new Promise(f => this._server.close(f));
   }
   onSocketRequested(payload) {
+    if (!this._patternMatcher(payload.host, payload.port)) {
+      this._handleDirect(payload);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksRequested, payload);
   }
   onSocketData(payload) {
+    const direct = this._directSockets.get(payload.uid);
+    if (direct) {
+      direct.write(payload.data);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksData, payload);
   }
   onSocketClosed(payload) {
+    const direct = this._directSockets.get(payload.uid);
+    if (direct) {
+      direct.destroy();
+      this._directSockets.delete(payload.uid);
+      return;
+    }
     this.emit(SocksProxy.Events.SocksClosed, payload);
   }
   socketConnected({
@@ -320,35 +413,35 @@ class SocksProxy extends _events.default {
     host,
     port
   }) {
-    var _this$_connections$ge;
-    (_this$_connections$ge = this._connections.get(uid)) === null || _this$_connections$ge === void 0 ? void 0 : _this$_connections$ge.socketConnected(host, port);
+    var _this$_connections$ge6;
+    (_this$_connections$ge6 = this._connections.get(uid)) === null || _this$_connections$ge6 === void 0 ? void 0 : _this$_connections$ge6.socketConnected(host, port);
   }
   socketFailed({
     uid,
     errorCode
   }) {
-    var _this$_connections$ge2;
-    (_this$_connections$ge2 = this._connections.get(uid)) === null || _this$_connections$ge2 === void 0 ? void 0 : _this$_connections$ge2.socketFailed(errorCode);
+    var _this$_connections$ge7;
+    (_this$_connections$ge7 = this._connections.get(uid)) === null || _this$_connections$ge7 === void 0 ? void 0 : _this$_connections$ge7.socketFailed(errorCode);
   }
   sendSocketData({
     uid,
     data
   }) {
-    var _this$_connections$ge3;
-    (_this$_connections$ge3 = this._connections.get(uid)) === null || _this$_connections$ge3 === void 0 ? void 0 : _this$_connections$ge3.sendData(data);
+    var _this$_connections$ge8;
+    (_this$_connections$ge8 = this._connections.get(uid)) === null || _this$_connections$ge8 === void 0 ? void 0 : _this$_connections$ge8.sendData(data);
   }
   sendSocketEnd({
     uid
   }) {
-    var _this$_connections$ge4;
-    (_this$_connections$ge4 = this._connections.get(uid)) === null || _this$_connections$ge4 === void 0 ? void 0 : _this$_connections$ge4.end();
+    var _this$_connections$ge9;
+    (_this$_connections$ge9 = this._connections.get(uid)) === null || _this$_connections$ge9 === void 0 ? void 0 : _this$_connections$ge9.end();
   }
   sendSocketError({
     uid,
     error
   }) {
-    var _this$_connections$ge5;
-    (_this$_connections$ge5 = this._connections.get(uid)) === null || _this$_connections$ge5 === void 0 ? void 0 : _this$_connections$ge5.error(error);
+    var _this$_connections$ge10;
+    (_this$_connections$ge10 = this._connections.get(uid)) === null || _this$_connections$ge10 === void 0 ? void 0 : _this$_connections$ge10.error(error);
   }
 }
 exports.SocksProxy = SocksProxy;
@@ -358,10 +451,12 @@ SocksProxy.Events = {
   SocksClosed: 'socksClosed'
 };
 class SocksProxyHandler extends _events.default {
-  constructor(redirectPortForTest) {
+  constructor(pattern, redirectPortForTest) {
     super();
     this._sockets = new Map();
+    this._patternMatcher = () => false;
     this._redirectPortForTest = void 0;
+    this._patternMatcher = parsePattern(pattern);
     this._redirectPortForTest = redirectPortForTest;
   }
   cleanup() {
@@ -374,6 +469,14 @@ class SocksProxyHandler extends _events.default {
     host,
     port
   }) {
+    if (!this._patternMatcher(host, port)) {
+      const payload = {
+        uid,
+        errorCode: 'ECONNREFUSED'
+      };
+      this.emit(SocksProxyHandler.Events.SocksFailed, payload);
+      return;
+    }
     if (host === 'local.playwright') host = '127.0.0.1';
     // Node.js 17 does resolve localhost to ipv6
     if (host === 'localhost') host = '127.0.0.1';

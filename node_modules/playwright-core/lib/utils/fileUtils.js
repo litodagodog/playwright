@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.canAccessFile = canAccessFile;
+exports.copyFileAndMakeWritable = copyFileAndMakeWritable;
 exports.existsAsync = void 0;
 exports.mkdirIfNeeded = mkdirIfNeeded;
 exports.removeFolders = removeFolders;
@@ -54,4 +55,8 @@ function canAccessFile(file) {
   } catch (e) {
     return false;
   }
+}
+async function copyFileAndMakeWritable(from, to) {
+  await _fs.default.promises.copyFile(from, to);
+  await _fs.default.promises.chmod(to, 0o664);
 }

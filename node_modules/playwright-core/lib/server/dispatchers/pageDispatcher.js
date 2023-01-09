@@ -164,7 +164,7 @@ class PageDispatcher extends _dispatcher.Dispatcher {
     });
   }
   async expectScreenshot(params, metadata) {
-    var _params$screenshotOpt;
+    var _params$screenshotOpt, _params$comparatorOpt;
     const mask = (((_params$screenshotOpt = params.screenshotOptions) === null || _params$screenshotOpt === void 0 ? void 0 : _params$screenshotOpt.mask) || []).map(({
       frame,
       selector
@@ -179,6 +179,10 @@ class PageDispatcher extends _dispatcher.Dispatcher {
     return await this._page.expectScreenshot(metadata, {
       ...params,
       locator,
+      comparatorOptions: {
+        ...params.comparatorOptions,
+        _comparator: (_params$comparatorOpt = params.comparatorOptions) === null || _params$comparatorOpt === void 0 ? void 0 : _params$comparatorOpt.comparator
+      },
       screenshotOptions: {
         ...params.screenshotOptions,
         mask

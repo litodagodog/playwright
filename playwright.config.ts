@@ -1,5 +1,5 @@
-// @ts-check
-const { devices } = require('@playwright/test');
+import type { PlaywrightTestConfig } from '@playwright/test';
+import { devices } from '@playwright/test';
 
 /**
  * Read environment variables from file.
@@ -7,18 +7,11 @@ const { devices } = require('@playwright/test');
  */
 // require('dotenv').config();
 
-// playwright.config.js
-const { expect } = require('@playwright/test');
-const { matchers } = require('expect-playwright');
-// add custom matchers
-expect.extend(matchers);
-
 /**
- * @see https://playwright.dev/docs/test-configuration
- * @type {import('@playwright/test').PlaywrightTestConfig}
+ * See https://playwright.dev/docs/test-configuration.
  */
-const config = {
-  testDir: './tests',
+const config: PlaywrightTestConfig = {
+  testDir: './e2e',
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
   expect: {
@@ -111,4 +104,4 @@ const config = {
   // },
 };
 
-module.exports = config;
+export default config;

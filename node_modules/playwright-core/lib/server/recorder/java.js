@@ -6,11 +6,9 @@ Object.defineProperty(exports, "__esModule", {
 exports.JavaLanguageGenerator = void 0;
 var _language = require("./language");
 var _utils = require("./utils");
-var _deviceDescriptors = _interopRequireDefault(require("../deviceDescriptors"));
 var _javascript = require("./javascript");
 var _stringUtils = require("../../utils/isomorphic/stringUtils");
 var _locatorGenerators = require("../isomorphic/locatorGenerators");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -27,6 +25,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * limitations under the License.
  */
 
+const deviceDescriptors = require('../deviceDescriptorsSource.json');
 class JavaLanguageGenerator {
   constructor() {
     this.id = 'java';
@@ -71,7 +70,7 @@ class JavaLanguageGenerator {
       });`;
     }
     if (signals.download) {
-      code = `Download download = ${pageAlias}.waitForDownload(() -> {
+      code = `Download download${signals.download.downloadAlias} = ${pageAlias}.waitForDownload(() -> {
         ${code}
       });`;
     }
@@ -169,7 +168,7 @@ function formatContextOptions(contextOptions, deviceName) {
   var _options$recordHar, _options$recordHar2, _options$recordHar3, _options$recordHar4, _options$recordHar5, _options$recordHar6, _options$recordHar7;
   const lines = [];
   if (!Object.keys(contextOptions).length && !deviceName) return '';
-  const device = deviceName ? _deviceDescriptors.default[deviceName] : {};
+  const device = deviceName ? deviceDescriptors[deviceName] : {};
   const options = {
     ...device,
     ...contextOptions

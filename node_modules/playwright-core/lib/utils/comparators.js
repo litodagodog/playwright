@@ -5,9 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.getComparator = getComparator;
 var _utilsBundle = require("../utilsBundle");
-var _pixelmatch = _interopRequireDefault(require("../third_party/pixelmatch"));
-var _diff_match_patch = require("../third_party/diff_match_patch");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _compare = require("../image_tools/compare");
 /**
  * Copyright 2017 Google Inc. All rights reserved.
  * Modifications copyright (c) Microsoft Corporation.
@@ -25,16 +23,15 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * limitations under the License.
  */
 
-let customPNGComparator;
-if (process.env.PW_CUSTOM_PNG_COMPARATOR) {
-  try {
-    customPNGComparator = require(process.env.PW_CUSTOM_PNG_COMPARATOR);
-    if (typeof customPNGComparator !== 'function') customPNGComparator = undefined;
-  } catch (e) {}
-}
+const pixelmatch = require('../third_party/pixelmatch');
+const {
+  diff_match_patch,
+  DIFF_INSERT,
+  DIFF_DELETE,
+  DIFF_EQUAL
+} = require('../third_party/diff_match_patch');
 function getComparator(mimeType) {
-  var _customPNGComparator;
-  if (mimeType === 'image/png') return (_customPNGComparator = customPNGComparator) !== null && _customPNGComparator !== void 0 ? _customPNGComparator : compareImages.bind(null, 'image/png');
+  if (mimeType === 'image/png') return compareImages.bind(null, 'image/png');
   if (mimeType === 'image/jpeg') return compareImages.bind(null, 'image/jpeg');
   if (mimeType === 'text/plain') return compareText;
   return compareBuffersOrStrings;
@@ -52,7 +49,7 @@ function compareBuffersOrStrings(actualBuffer, expectedBuffer) {
   return null;
 }
 function compareImages(mimeType, actualBuffer, expectedBuffer, options = {}) {
-  var _options$threshold, _ref;
+  var _options$_comparator, _ref;
   if (!actualBuffer || !(actualBuffer instanceof Buffer)) return {
     errorMessage: 'Actual result should be a Buffer.'
   };
@@ -71,9 +68,21 @@ function compareImages(mimeType, actualBuffer, expectedBuffer, options = {}) {
     width: expected.width,
     height: expected.height
   });
-  const count = (0, _pixelmatch.default)(expected.data, actual.data, diff.data, expected.width, expected.height, {
-    threshold: (_options$threshold = options.threshold) !== null && _options$threshold !== void 0 ? _options$threshold : 0.2
-  });
+  let count;
+  if (options._comparator === 'ssim-cie94') {
+    count = (0, _compare.compare)(expected.data, actual.data, diff.data, expected.width, expected.height, {
+      // All ΔE* formulae are originally designed to have the difference of 1.0 stand for a "just noticeable difference" (JND).
+      // See https://en.wikipedia.org/wiki/Color_difference#CIELAB_%CE%94E*
+      maxColorDeltaE94: 1.0
+    });
+  } else if (((_options$_comparator = options._comparator) !== null && _options$_comparator !== void 0 ? _options$_comparator : 'pixelmatch') === 'pixelmatch') {
+    var _options$threshold;
+    count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {
+      threshold: (_options$threshold = options.threshold) !== null && _options$threshold !== void 0 ? _options$threshold : 0.2
+    });
+  } else {
+    throw new Error(`Configuration specifies unknown comparator "${options._comparator}"`);
+  }
   const maxDiffPixels1 = options.maxDiffPixels;
   const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? expected.width * expected.height * options.maxDiffPixelRatio : undefined;
   let maxDiffPixels;
@@ -90,7 +99,7 @@ function compareText(actual, expectedBuffer) {
   };
   const expected = expectedBuffer.toString('utf-8');
   if (expected === actual) return null;
-  const dmp = new _diff_match_patch.diff_match_patch();
+  const dmp = new diff_match_patch();
   const d = dmp.diff_main(expected, actual);
   dmp.diff_cleanupSemantic(d);
   return {
@@ -104,13 +113,13 @@ function diff_prettyTerminal(diffs) {
     const data = diffs[x][1]; // Text of change.
     const text = data;
     switch (op) {
-      case _diff_match_patch.DIFF_INSERT:
+      case DIFF_INSERT:
         html[x] = _utilsBundle.colors.green(text);
         break;
-      case _diff_match_patch.DIFF_DELETE:
+      case DIFF_DELETE:
         html[x] = _utilsBundle.colors.reset(_utilsBundle.colors.strikethrough(_utilsBundle.colors.red(text)));
         break;
-      case _diff_match_patch.DIFF_EQUAL:
+      case DIFF_EQUAL:
         html[x] = text;
         break;
     }

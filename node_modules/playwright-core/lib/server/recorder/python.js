@@ -7,9 +7,7 @@ exports.PythonLanguageGenerator = void 0;
 var _language = require("./language");
 var _utils = require("./utils");
 var _stringUtils = require("../../utils/isomorphic/stringUtils");
-var _deviceDescriptors = _interopRequireDefault(require("../deviceDescriptors"));
 var _locatorGenerators = require("../isomorphic/locatorGenerators");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -26,6 +24,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * limitations under the License.
  */
 
+const deviceDescriptors = require('../deviceDescriptorsSource.json');
 class PythonLanguageGenerator {
   constructor(isAsync, isPyTest) {
     this.id = void 0;
@@ -73,16 +72,16 @@ class PythonLanguageGenerator {
     const actionCall = this._generateActionCall(action);
     let code = `${this._awaitPrefix}${subject}.${actionCall}`;
     if (signals.popup) {
-      code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as popup_info {
+      code = `${this._asyncPrefix}with ${pageAlias}.expect_popup() as ${signals.popup.popupAlias}_info {
         ${code}
       }
-      ${signals.popup.popupAlias} = ${this._awaitPrefix}popup_info.value`;
+      ${signals.popup.popupAlias} = ${this._awaitPrefix}${signals.popup.popupAlias}_info.value`;
     }
     if (signals.download) {
-      code = `${this._asyncPrefix}with ${pageAlias}.expect_download() as download_info {
+      code = `${this._asyncPrefix}with ${pageAlias}.expect_download() as download${signals.download.downloadAlias}_info {
         ${code}
       }
-      download = ${this._awaitPrefix}download_info.value`;
+      download${signals.download.downloadAlias} = ${this._awaitPrefix}download${signals.download.downloadAlias}_info.value`;
     }
     formatter.add(code);
     return formatter.format();
@@ -229,7 +228,7 @@ function convertContextOptions(options) {
   return result;
 }
 function formatContextOptions(options, deviceName, asDict) {
-  const device = deviceName && _deviceDescriptors.default[deviceName];
+  const device = deviceName && deviceDescriptors[deviceName];
   if (!device) return formatOptions(convertContextOptions(options), false, asDict);
   return `**playwright.devices[${quote(deviceName)}]` + formatOptions(convertContextOptions((0, _language.sanitizeDeviceOptions)(device, options)), true, asDict);
 }

@@ -49,8 +49,8 @@ async function startPlaywrightContainer(port) {
   const info = await ensurePlaywrightContainerOrDie(port);
   const deltaMs = Date.now() - time;
   console.log('Done in ' + (deltaMs / 1000).toFixed(1) + 's');
-  await tetherHostNetwork(info.wsEndpoint);
-  console.log([`- Endpoint: ${info.httpEndpoint}`, `- View screen:`, `    ${info.vncSession}`].join('\n'));
+  await tetherHostNetwork(info.httpEndpoint);
+  console.log('Endpoint:', info.httpEndpoint);
 }
 async function stopAllPlaywrightContainers() {
   await checkDockerEngineIsRunningOrDie();
@@ -120,7 +120,7 @@ async function buildPlaywrightImage() {
   console.log(`Done!`);
 }
 async function printDockerStatus() {
-  var _info$wsEndpoint, _info$vncSession;
+  var _info$httpEndpoint;
   const isDockerEngine = await dockerApi.checkEngineRunning();
   const imageIsPulled = isDockerEngine && !!(await findDockerImage(VRT_IMAGE_NAME));
   const info = isDockerEngine ? await containerInfo() : undefined;
@@ -128,8 +128,7 @@ async function printDockerStatus() {
     dockerEngineRunning: isDockerEngine,
     imageName: VRT_IMAGE_NAME,
     imageIsPulled,
-    containerWSEndpoint: (_info$wsEndpoint = info === null || info === void 0 ? void 0 : info.wsEndpoint) !== null && _info$wsEndpoint !== void 0 ? _info$wsEndpoint : '',
-    containerVNCEndpoint: (_info$vncSession = info === null || info === void 0 ? void 0 : info.vncSession) !== null && _info$vncSession !== void 0 ? _info$vncSession : ''
+    containerEndpoint: (_info$httpEndpoint = info === null || info === void 0 ? void 0 : info.httpEndpoint) !== null && _info$httpEndpoint !== void 0 ? _info$httpEndpoint : ''
   }, null, 2));
 }
 async function containerInfo() {
@@ -147,20 +146,14 @@ async function containerInfo() {
     return url.toString();
   };
   const WS_LINE_PREFIX = 'Listening on ws://';
+  const REVERSE_PROXY_LINE_PREFIX = 'Playwright container listening on';
   const webSocketLine = logLines.find(line => line.startsWith(WS_LINE_PREFIX));
-  const NOVNC_LINE_PREFIX = 'novnc is listening on ';
-  const novncLine = logLines.find(line => line.startsWith(NOVNC_LINE_PREFIX));
-  if (!novncLine || !webSocketLine) return undefined;
-  const wsEndpoint = containerUrlToHostUrl('ws://' + webSocketLine.substring(WS_LINE_PREFIX.length));
-  const vncSession = containerUrlToHostUrl(novncLine.substring(NOVNC_LINE_PREFIX.length));
-  if (!wsEndpoint || !vncSession) return undefined;
-  const wsUrl = new URL(wsEndpoint);
-  const httpEndpoint = 'http://' + wsUrl.host;
-  return {
-    wsEndpoint,
-    vncSession,
+  const reverseProxyLine = logLines.find(line => line.startsWith(REVERSE_PROXY_LINE_PREFIX));
+  if (!webSocketLine || !reverseProxyLine) return undefined;
+  const httpEndpoint = containerUrlToHostUrl('http://127.0.0.1:' + reverseProxyLine.substring(REVERSE_PROXY_LINE_PREFIX.length).trim());
+  return httpEndpoint ? {
     httpEndpoint
-  };
+  } : undefined;
 }
 async function ensurePlaywrightContainerOrDie(port) {
   const pwImage = await findDockerImage(VRT_IMAGE_NAME);
@@ -210,9 +203,6 @@ async function ensurePlaywrightContainerOrDie(port) {
     ports: [{
       container: 5400,
       host: port
-    }, {
-      container: 7900,
-      host: 0
     }],
     labels: {
       [VRT_CONTAINER_LABEL_NAME]: VRT_CONTAINER_LABEL_VALUE
@@ -250,10 +240,11 @@ async function tetherHostNetwork(endpoint) {
   const wsEndpoint = await (0, _localUtilsDispatcher.urlToWSEndpoint)(undefined /* progress */, endpoint);
   const headers = {
     'User-Agent': (0, _userAgent.getUserAgent)(),
-    'x-playwright-network-tethering': '1'
+    'x-playwright-network-tethering': '1',
+    'x-playwright-proxy': '*'
   };
   const transport = await _transport.WebSocketTransport.connect(undefined /* progress */, wsEndpoint, headers, true /* followRedirects */);
-  const socksInterceptor = new _socksInterceptor.SocksInterceptor(transport, undefined);
+  const socksInterceptor = new _socksInterceptor.SocksInterceptor(transport, '*', undefined);
   transport.onmessage = json => socksInterceptor.interceptMessage(json);
   transport.onclose = () => {
     socksInterceptor.cleanup();
@@ -351,9 +342,9 @@ function addDockerCLI(program) {
         'x-playwright-launch-options': JSON.stringify({
           headless: false,
           viewport: null
-        }),
-        'x-playwright-proxy': '*'
-      }
+        })
+      },
+      _exposeNetwork: '*'
     });
     const context = await browser.newContext();
     context.on('page', page => {

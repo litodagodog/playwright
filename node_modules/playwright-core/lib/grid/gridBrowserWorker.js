@@ -24,7 +24,7 @@ function launchGridBrowserWorker(gridURL, agentId, workerId, browserName) {
   log('created');
   const ws = new _utilsBundle.ws(gridURL.replace('http://', 'ws://') + `/registerWorker?agentId=${agentId}&workerId=${workerId}`);
   new _playwrightConnection.PlaywrightConnection(Promise.resolve(), 'launch-browser', ws, {
-    enableSocksProxy: true,
+    socksProxyPattern: '*',
     browserName,
     launchOptions: {}
   }, {}, log, async () => {

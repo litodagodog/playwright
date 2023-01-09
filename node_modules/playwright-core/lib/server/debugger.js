@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Debugger = void 0;
+exports.shouldSlowMo = shouldSlowMo;
 var _events = require("events");
 var _utils = require("../utils");
 var _browserContext = require("./browserContext");
@@ -33,6 +34,7 @@ class Debugger extends _events.EventEmitter {
     this._enabled = void 0;
     this._context = void 0;
     this._muted = false;
+    this._slowMo = void 0;
     this._context = context;
     this._context[symbol] = this;
     this._enabled = (0, _utils.debugMode)() === 'inspector';
@@ -41,10 +43,7 @@ class Debugger extends _events.EventEmitter {
     this._context.once(_browserContext.BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
     });
-  }
-  static lookup(context) {
-    if (!context) return;
-    return context[symbol];
+    this._slowMo = this._context._browser.options.slowMo;
   }
   async setMuted(muted) {
     this._muted = muted;
@@ -52,6 +51,12 @@ class Debugger extends _events.EventEmitter {
   async onBeforeCall(sdkObject, metadata) {
     if (this._muted) return;
     if (shouldPauseOnCall(sdkObject, metadata) || this._pauseOnNextStatement && shouldPauseBeforeStep(metadata)) await this.pause(sdkObject, metadata);
+  }
+  async _doSlowMo() {
+    await new Promise(f => setTimeout(f, this._slowMo));
+  }
+  async onAfterCall(sdkObject, metadata) {
+    if (this._slowMo && shouldSlowMo(metadata)) await this._doSlowMo();
   }
   async onBeforeInputAction(sdkObject, metadata) {
     if (this._muted) return;
@@ -120,4 +125,7 @@ function shouldPauseBeforeStep(metadata) {
   // Stop before everything that generates snapshot. But don't stop before those marked as pausesBeforeInputActions
   // since we stop in them on a separate instrumentation signal.
   return _debug.commandsWithTracingSnapshots.has(step) && !_debug.pausesBeforeInputActions.has(metadata.type + '.' + metadata.method);
+}
+function shouldSlowMo(metadata) {
+  return _debug.commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
 }

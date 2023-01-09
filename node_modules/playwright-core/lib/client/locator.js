@@ -305,6 +305,9 @@ class Locator {
       ...options
     });
   }
+  async all() {
+    return new Array(await this.count()).fill(0).map((e, i) => this.nth(i));
+  }
   async allInnerTexts() {
     return this._frame.$$eval(this._selector, ee => ee.map(e => e.innerText));
   }

@@ -137,11 +137,6 @@ class Page extends _instrumentation.SdkObject {
     this._interceptFileChooser = false;
     await Promise.all([this._delegate.updateEmulatedViewportSize(true), this._delegate.updateEmulateMedia(), this._delegate.updateFileChooserInterception()]);
   }
-  async _doSlowMo() {
-    const slowMo = this._browserContext._browser.options.slowMo;
-    if (!slowMo) return;
-    await new Promise(x => setTimeout(x, slowMo));
-  }
   _didClose() {
     this._frameManager.dispose();
     this._frameThrottler.dispose();
@@ -235,7 +230,6 @@ class Page extends _instrumentation.SdkObject {
       const [response] = await Promise.all([
       // Reload must be a new document, and should not be confused with a stray pushState.
       this.mainFrame()._waitForNavigation(progress, true /* requiresNewDocument */, options), this._delegate.reload()]);
-      await this._doSlowMo();
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -253,7 +247,6 @@ class Page extends _instrumentation.SdkObject {
       if (!result) return null;
       const response = await waitPromise;
       if (error) throw error;
-      await this._doSlowMo();
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -271,7 +264,6 @@ class Page extends _instrumentation.SdkObject {
       if (!result) return null;
       const response = await waitPromise;
       if (error) throw error;
-      await this._doSlowMo();
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -281,7 +273,6 @@ class Page extends _instrumentation.SdkObject {
     if (options.reducedMotion !== undefined) this._emulatedMedia.reducedMotion = options.reducedMotion;
     if (options.forcedColors !== undefined) this._emulatedMedia.forcedColors = options.forcedColors;
     await this._delegate.updateEmulateMedia();
-    await this._doSlowMo();
   }
   emulatedMedia() {
     var _contextOptions$color, _contextOptions$reduc, _contextOptions$force;
@@ -303,7 +294,6 @@ class Page extends _instrumentation.SdkObject {
       }
     };
     await this._delegate.updateEmulatedViewportSize();
-    await this._doSlowMo();
   }
   viewportSize() {
     var _this$emulatedSize;
@@ -549,10 +539,16 @@ class Worker extends _instrumentation.SdkObject {
     this.emit(Worker.Events.Close, this);
   }
   async evaluateExpression(expression, isFunction, arg) {
-    return js.evaluateExpression(await this._executionContextPromise, true /* returnByValue */, expression, isFunction, arg);
+    return js.evaluateExpression(await this._executionContextPromise, expression, {
+      returnByValue: true,
+      isFunction
+    }, arg);
   }
   async evaluateExpressionHandle(expression, isFunction, arg) {
-    return js.evaluateExpression(await this._executionContextPromise, false /* returnByValue */, expression, isFunction, arg);
+    return js.evaluateExpression(await this._executionContextPromise, expression, {
+      returnByValue: false,
+      isFunction
+    }, arg);
   }
 }
 exports.Worker = Worker;

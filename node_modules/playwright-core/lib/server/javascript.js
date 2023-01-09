@@ -95,6 +95,7 @@ exports.ExecutionContext = ExecutionContext;
 class JSHandle extends _instrumentation.SdkObject {
   constructor(context, type, preview, objectId, value) {
     super(context, 'handle');
+    this.__jshandle = true;
     this._context = void 0;
     this._disposed = false;
     this._objectId = void 0;
@@ -172,11 +173,14 @@ class JSHandle extends _instrumentation.SdkObject {
 }
 exports.JSHandle = JSHandle;
 async function evaluate(context, returnByValue, pageFunction, ...args) {
-  return evaluateExpression(context, returnByValue, String(pageFunction), typeof pageFunction === 'function', ...args);
+  return evaluateExpression(context, String(pageFunction), {
+    returnByValue,
+    isFunction: typeof pageFunction === 'function'
+  }, ...args);
 }
-async function evaluateExpression(context, returnByValue, expression, isFunction, ...args) {
+async function evaluateExpression(context, expression, options, ...args) {
   const utilityScript = await context.utilityScript();
-  expression = normalizeEvaluationExpression(expression, isFunction);
+  expression = normalizeEvaluationExpression(expression, options.isFunction);
   const handles = [];
   const toDispose = [];
   const pushHandle = handle => {
@@ -209,16 +213,19 @@ async function evaluateExpression(context, returnByValue, expression, isFunction
   }
 
   // See UtilityScript for arguments.
-  const utilityScriptValues = [isFunction, returnByValue, expression, args.length, ...args];
+  const utilityScriptValues = [options.isFunction, options.returnByValue, options.exposeUtilityScript, expression, args.length, ...args];
   const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
   try {
-    return await context.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
+    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScript, utilityScriptValues, utilityScriptObjectIds);
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
 }
 async function evaluateExpressionAndWaitForSignals(context, returnByValue, expression, isFunction, ...args) {
-  return await context.waitForSignalsCreatedBy(() => evaluateExpression(context, returnByValue, expression, isFunction, ...args));
+  return await context.waitForSignalsCreatedBy(() => evaluateExpression(context, expression, {
+    returnByValue,
+    isFunction
+  }, ...args));
 }
 function parseUnserializableValue(unserializableValue) {
   if (unserializableValue === 'NaN') return NaN;
