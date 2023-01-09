@@ -15,8 +15,12 @@ test('Menu Testing', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Running Tests' })).toHaveText('Running Tests');
   await page.getByRole('link', { name: 'Test Generator' }).nth(0).click();
   await expect(page.getByRole('heading', { name: 'Test Generator' })).toHaveText('Test Generator');
+  await page.getByRole('link', { name: 'Trace Viewer' }).nth(0).click();
+  await expect(page.getByRole('heading', { name: 'Trace Viewer' })).toHaveText('Trace Viewer');
+  await page.getByRole('link', { name: 'CI GitHub Actions' }).nth(0).click();
+  await expect(page.getByRole('heading', { name: 'CI GitHub Actions' })).toHaveText('CI GitHub Actions');
 });
-test.skip('Assersions', async ({ page }) => {
+/*test.skip('Assersions', async ({ page }) => {
     const URL = 'https://playwright.dev/docs/test-assertions';
     await page.goto(URL);
     const response = await page.request.get(URL);
@@ -27,4 +31,4 @@ test.skip('Assersions', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Custom Expect Message#​' })).toHaveText('Custom Expect Message');
     await expect(page.getByRole('heading', { name: 'Polling#​' })).toHaveText('Polling');
     await expect(page.getByRole('heading', { name: 'Retrying#​' })).toHaveText('Retrying');
-  });
+  }); */
