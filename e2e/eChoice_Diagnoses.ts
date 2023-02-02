@@ -25,7 +25,7 @@ test.beforeAll(async ({ browser }) => {
 });
 
 test.afterAll(async () => {
-  //await page.close();
+  await page.close();
 });
 
 test('Select Resident', async () => {
@@ -39,27 +39,35 @@ test('Diagnoses', async () => {
     await page.getByRole('button', { name: 'Open' }).click();
     await page.getByRole('option', { name: /Diagnoses .*/ }).click();
     await page.waitForTimeout(10000);
-    const diagTrue = await page.getByText('Percutaneous aspiration of renal pelvis').isVisible();
-    if ((diagTrue == true)){
-      //Delete Diagnosis if exists
-      await page.locator('//*[@id="fade-button"]/svg').click();
+    await page.getByRole('button', { name: 'ADD DIAGNOSIS' }).click();
+    await page.getByRole('heading', { name: 'Add Diagnosis' }).isVisible();
+    await page.getByPlaceholder('Search Diagnosis').click();
+    await page.getByRole('option', { name: 'Percutaneous aspiration of renal pelvis' }).click();
+    
+    const duplicateEntry = await page.getByText('Duplicate Diagnosis').isVisible();
+    if ((duplicateEntry == true )){
+      await page.getByRole('button', { name: 'CANCEL' }).click();
+      await page.getByRole('row', { name: /Percutaneous aspiration of renal pelvis .*/ }).locator('#fade-button').click();
       await page.getByRole('menuitem', { name: 'Delete' }).click();
       await page.getByRole('button', { name: 'DELETE' }).click();
       await page.waitForLoadState();
     }
     else {
-      await page.getByRole('button', { name: 'ADD DIAGNOSIS' }).click();
-      await page.waitForTimeout(8000);
-      await page.getByRole('heading', { name: 'Add Diagnosis' }).isVisible();
-      await page.getByPlaceholder('Search Diagnosis').click();
-      await page.getByRole('option', { name: 'Percutaneous aspiration of renal pelvis' }).click();
-      await page.getByLabel('Notes').click();
-      await page.getByLabel('Notes').fill('This note is from playwright automation');
-      await page.waitForTimeout(8000);
+      await page.getByRole('button', { name: 'ADD' }).isEnabled();
       await page.getByRole('button', { name: 'ADD' }).click();
+      // await page.waitForTimeout(8000);
       await page.getByRole('cell', { name: 'Percutaneous aspiration of renal pelvis' }).isVisible();
       await page.getByRole('cell', { name: 'This note is from playwright automation' }).isVisible();
     }
-    //DELETE 
-
 });
+
+
+// await page.getByRole('option', { name: 'Diagnoses (2) Updated 02/02/2023' }).click();
+// await page.getByRole('button', { name: 'ADD DIAGNOSIS' }).click();
+// await page.getByPlaceholder('Search Diagnosis').click();
+// await page.getByPlaceholder('Search Diagnosis').fill('per');
+// await page.getByRole('option', { name: 'Percutaneous aspiration of renal pelvis' }).click();
+// await page.getByText('Duplicate Diagnosis').click();
+// await page.getByPlaceholder('Search Diagnosis').click();
+// await page.getByRole('option', { name: 'Sycosis' }).click();
+// await page.getByRole('button', { name: 'ADD' }).click();
