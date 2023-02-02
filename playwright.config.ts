@@ -1,5 +1,8 @@
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * Read environment variables from file.
@@ -11,8 +14,9 @@ import { devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 const config: PlaywrightTestConfig = {
+  //globalSetup: './global-setup',
   testDir: './e2e',
-  testMatch: /.*.js/,
+  testMatch: /.*.*/,
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
   expect: {
@@ -34,6 +38,7 @@ const config: PlaywrightTestConfig = {
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
+    //storageState: 'storage-state/storageState.json',
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */

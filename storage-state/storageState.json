@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "abuse_interstitial",
+      "value": "a6f8-2001-4453-618-c700-cc65-c972-1368-75.ngrok.io",
+      "domain": "a6f8-2001-4453-618-c700-cc65-c972-1368-75.ngrok.io",
+      "path": "/",
+      "expires": 1675356400,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    }
+  ],
+  "origins": []
+}
