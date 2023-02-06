@@ -13,7 +13,7 @@ test.use({
 test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
-  await page.goto('https://9471-2001-4453-618-c700-b412-99bc-1f3b-abeb.ngrok.io/login');
+  await page.goto('/login');
   await page.getByRole('button', { name: 'Visit Site' }).click();
   await page.waitForLoadState();
   await page.getByLabel('Username *').click();
@@ -46,66 +46,61 @@ test('Catheterisations', async () => {
     await page.getByLabel('Notes').fill('Add Catheterisation using playwright automation');
     await page.waitForTimeout(9000);
     //Check for Duplicate Entry(duplicate entry can be possible)
-    const duplicateEntry = await page.getByText('Duplicate Diagnosis').isVisible();
+    const duplicateEntry = await page.getByText('Duplicate Catheterisation').isVisible();
     if ((duplicateEntry == true )){
       //Add Catheterisation even if duplicate is TRUE
       await page.getByRole('button', { name: 'ADD' }).isEnabled();
       await page.getByRole('button', { name: 'ADD' }).click();
       await page.waitForTimeout(8000);
-      await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).isVisible();
-      await page.getByRole('cell', { name: /.* Diane Curtis/ }).isVisible();
-      await page.waitForLoadState();
-    }
-    else {
-      //Add Catheterisation 
-      await page.getByRole('button', { name: 'ADD' }).isEnabled();
-      await page.getByRole('button', { name: 'ADD' }).click();
-      await page.waitForTimeout(9000);
       await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
       await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
-      //UPDATE 
-      await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().locator('#fade-button').click();
-      await page.getByRole('menuitem', { name: 'Update' }).click();
-      await page.getByLabel('Notes').click();
-      await page.getByLabel('Notes').press('Meta+a');
-      await page.getByLabel('Notes').fill('Updated Notes using playwright');
-      //await page.getByLabel('Start Date *').fill('2023-01-01');
-      //await page.waitForTimeout(20000);
-      await expect(page.getByRole('button', { name: 'UPDATE' })).toBeEnabled();
-      await page.getByRole('button', { name: 'UPDATE' }).click({force:true});
-      await page.getByText('Successfully updated catheterisation.').isVisible();
-      await page.waitForTimeout(8000);
-      //await page.getByRole('cell', { name: '01/03/2023' }).isVisible();
-      await page.getByRole('cell', { name: 'Updated Notes using playwright' }).isVisible();
+      await page.waitForLoadState();
     }
-      // //Cease Catheterisations
-      // await page.getByRole('row', { name: /Adult osteochondritis of spine .*/ }).locator('#fade-button').click();
-      // await page.getByRole('menuitem', { name: 'Cease' }).click();
-      // await page.getByRole('heading', { name: 'Cease Diagnosis?' }).click();
-      // await page.getByRole('button', { name: 'CEASE' }).click();
-      // await page.getByText('Successfully ceased Diagnosis.').isVisible();
-      // await page.waitForTimeout(8000);
-      // await page.getByRole('tab', { name: 'Ceased' }).click();
-      // await page.getByRole('cell', { name: 'Adult osteochondritis of spine' }).isVisible();
-      // //Uncease Catheterisations
-      // await page.getByRole('row', { name: /Adult osteochondritis of spine .*/ }).locator('#fade-button').click();
-      // await page.getByRole('menuitem', { name: 'Uncease' }).click();
-      // await page.getByRole('heading', { name: 'Uncease Diagnosis?' }).click();
-      // await page.getByRole('button', { name: 'UNCEASE' }).click();
-      // await page.getByText('Succesfully unceased Diagnosis.').isVisible();
-      // await page.waitForTimeout(8000);
-      // //Delete Catheterisations
-      // await page.getByRole('tab', { name: 'Active' }).click();
-      // await page.getByRole('cell', { name: 'Adult osteochondritis of spine' }).isVisible();
-      // await page.getByRole('row', { name: 'Adult osteochondritis of spine 03/02/2023 Updated Notes using playwright 03/02/2023 08:48 AM Diane Curtis' }).locator('#fade-button').click();
-      // await page.getByText('Delete').click();
-      // await page.getByRole('heading', { name: 'Delete Diagnosis?' }).isVisible();
-      // await page.getByRole('button', { name: 'DELETE' }).click();
-      // await page.waitForTimeout(8000);
-      // await page.getByRole('cell', { name: 'Adult osteochondritis of spine' }).isHidden();
-      // await page.getByRole('tab', { name: 'Ceased' }).click();
-      // await page.waitForTimeout(8000);
-      // await page.getByRole('cell', { name: 'Adult osteochondritis of spine' }).isHidden();
-
-
+    else{
+      await page.getByRole('button', { name: 'ADD' }).isEnabled();
+      await page.getByRole('button', { name: 'ADD' }).click();
+      await page.waitForTimeout(8000);
+      await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
+      await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
+      await page.waitForLoadState();
+    }
+    //UPDATE 
+    await page.locator('#fade-button').first().click();
+    await page.getByRole('menuitem', { name: 'Update' }).click();
+    await page.getByLabel('Notes').click();
+    await page.getByLabel('Notes').press('Meta+a');
+    await page.getByLabel('Notes').fill('Update Catheterisation using playwright automation');
+    await page.waitForLoadState();
+    await expect(page.getByRole('button', { name: 'UPDATE' })).toBeEnabled();
+    await page.getByRole('button', { name: 'UPDATE' }).click({force:true});
+    await page.getByText('Successfully updated catheterisation.').isVisible();
+    await page.waitForLoadState();
+    await page.getByRole('cell', { name: 'Update Catheterisation using playwright automation' }).first().isVisible();
+    //Cease Catheterisations
+    await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().locator('#fade-button').click();
+    await page.getByRole('menuitem', { name: 'Cease' }).click();
+    await page.getByRole('heading', { name: 'Cease Catheterisation?' }).isVisible();
+    await page.getByRole('button', { name: 'CEASE' }).click();
+    await page.getByText('Successfully ceased catheterisation.').isVisible();
+    await page.waitForLoadState();
+    await page.getByRole('tab', { name: 'Ceased' }).click();
+    await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().isVisible();
+    //Uncease Catheterisations
+    await page.getByRole('cell', { name: '01/02/2023' }).nth(0).isVisible();
+    await page.getByRole('cell', { name: '01/02/2023' }).nth(2).isVisible();
+    await page.locator('#fade-button').first().click();
+    //await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().locator('#fade-button').click();
+    await page.getByRole('menuitem', { name: 'Uncease' }).click();
+    await page.getByRole('heading', { name: 'Uncease Catheterisation?' }).click();
+    await page.getByRole('button', { name: 'UNCEASE' }).click();
+    await page.getByText('Succesfully unceased catheterisation.').isVisible();
+    await page.waitForTimeout(8000);
+    //Delete Catheterisations
+    await page.getByRole('tab', { name: 'Active' }).click();
+    await page.getByRole('cell', { name: 'Update Catheterisation using playwright automation' }).first().isVisible();
+    await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().locator('#fade-button').click();
+    await page.getByText('Delete').click();
+    await page.getByRole('heading', { name: 'Delete Catheterisation?' }).isVisible();
+    await page.getByRole('button', { name: 'DELETE' }).click();
+    await page.getByText('Successfully deleted catheterisation.').isVisible();
 });
