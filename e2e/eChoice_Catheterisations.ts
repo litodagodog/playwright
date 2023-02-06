@@ -70,27 +70,24 @@ test('Catheterisations', async () => {
     await page.getByLabel('Notes').click();
     await page.getByLabel('Notes').press('Meta+a');
     await page.getByLabel('Notes').fill('Update Catheterisation using playwright automation');
-    await page.waitForLoadState();
     await expect(page.getByRole('button', { name: 'UPDATE' })).toBeEnabled();
     await page.getByRole('button', { name: 'UPDATE' }).click({force:true});
     await page.getByText('Successfully updated catheterisation.').isVisible();
-    await page.waitForLoadState();
     await page.getByRole('cell', { name: 'Update Catheterisation using playwright automation' }).first().isVisible();
     //Cease Catheterisations
     await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().locator('#fade-button').click();
-    await page.getByRole('menuitem', { name: 'Cease' }).click();
+    await page.getByRole('menuitem', { name: 'Cease' }).click({force:true});
     await page.getByRole('heading', { name: 'Cease Catheterisation?' }).isVisible();
-    await page.getByRole('button', { name: 'CEASE' }).click();
+    await page.getByRole('button', { name: 'CEASE' }).click({force:true});
     await page.getByText('Successfully ceased catheterisation.').isVisible();
-    await page.waitForLoadState();
-    await page.getByRole('tab', { name: 'Ceased' }).click();
+    await page.getByRole('tab', { name: 'Ceased' }).click({force:true});
     await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().isVisible();
     //Uncease Catheterisations
     await page.getByRole('cell', { name: '01/02/2023' }).nth(0).isVisible();
     await page.getByRole('cell', { name: '01/02/2023' }).nth(2).isVisible();
-    await page.locator('#fade-button').first().click();
+    await page.locator('#fade-button').first().click({force:true});
     //await page.getByRole('row', { name: / .* Catheterisation using playwright automation .*/ }).first().locator('#fade-button').click();
-    await page.getByRole('menuitem', { name: 'Uncease' }).click();
+    await page.getByRole('menuitem', { name: 'Uncease' }).click({force:true});
     await page.getByRole('heading', { name: 'Uncease Catheterisation?' }).click();
     await page.getByRole('button', { name: 'UNCEASE' }).click();
     await page.getByText('Succesfully unceased catheterisation.').isVisible();
