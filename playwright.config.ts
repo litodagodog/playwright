@@ -1,6 +1,7 @@
 import type { PlaywrightTestConfig } from '@playwright/test';
 import { devices } from '@playwright/test';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -8,7 +9,8 @@ dotenv.config();
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-// require('dotenv').config();
+require('dotenv').config();
+
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -38,6 +40,9 @@ const config: PlaywrightTestConfig = {
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
+    video: 'on-first-retry',
+    baseURL: process.env.QA === '1' ? 'https://a771-180-195-114-156.ngrok.io' : 'https://a771-180-195-114-156.ngrok.io',
+
     //storageState: 'storage-state/storageState.json',
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
@@ -101,7 +106,7 @@ const config: PlaywrightTestConfig = {
   ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-  // outputDir: 'test-results/',
+  outputDir: 'test-results/',
 
   /* Run your local dev server before starting the tests */
   // webServer: {

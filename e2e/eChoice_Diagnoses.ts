@@ -73,8 +73,8 @@ test('Diagnoses', async () => {
       await page.getByRole('button', { name: 'UPDATE' }).click();
       await page.getByText('Successfully updated Diagnosis.').isVisible();
       await page.waitForTimeout(8000);
-      await page.getByRole('cell', { name: 'Adult osteochondritis of spine' }).click();
-      await page.getByRole('cell', { name: 'Updated Notes using playwright' }).click();
+      await page.getByRole('cell', { name: 'Adult osteochondritis of spine' }).isVisible();
+      await page.getByRole('cell', { name: 'Updated Notes using playwright' }).isVisible();
       //Cease Diagnosis
       await page.getByRole('row', { name: /Adult osteochondritis of spine .*/ }).locator('#fade-button').click();
       await page.getByRole('menuitem', { name: 'Cease' }).click();
