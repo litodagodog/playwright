@@ -13,7 +13,7 @@ test.use({
 test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
-  await page.goto('https://9471-2001-4453-618-c700-b412-99bc-1f3b-abeb.ngrok.io/login');
+  await page.goto('/login');
   await page.getByRole('button', { name: 'Visit Site' }).click();
   await page.waitForLoadState();
   await page.getByLabel('Username *').click();
