@@ -30,7 +30,7 @@ test.afterAll(async () => {
 
 test('Select Resident', async () => {
     await page.getByRole('button', { name: 'Residents' }).click();
-    await page.getByRole('checkbox', { name: /Adam Sandler .*/ }).click();
+    await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
     await page.waitForTimeout(8000);
 });
 
@@ -68,18 +68,15 @@ test('Hospitalization Periods', async () => {
   
     await page.getByRole('combobox').click();
     await page.getByRole('option', { name: 'Hospitalisation Periods' }).click();
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(8000);
+    // CHECK for Duplicate
     const checkEnable = await page.getByRole('button', { name: 'ADD HOSPITALISATION PERIOD' }).isVisible();
     if ((checkEnable == true))
     {
-      const dupHos =   await page.getByRole('cell', { name: '01/01/2000' }).isVisible();
-      if ((dupHos == true))
-      {
-        await page.getByRole('button', { name: 'ADD HOSPITALISATION PERIOD' }).click();
-        await page.getByRole('heading', { name: 'Add Hospitalisation Period' }).isVisible();
-        await page.waitForTimeout(8000);
-        await page.getByLabel('Date *').fill(formatDate(randomDate('2022-01-01', '2022-12-31')));
-      }
+      await page.getByRole('button', { name: 'ADD HOSPITALISATION PERIOD' }).click();
+      await page.getByRole('heading', { name: 'Add Hospitalisation Period' }).isVisible();
+      await page.waitForTimeout(8000);
+      await page.getByLabel('Date *').fill(formatDate(randomDate('2022-10-01', '2022-10-30')));
       await page.getByLabel('Notes').click();
       await page.getByLabel('Notes').fill('Add Hospitalization Period using playwright automation');
       await page.getByRole('button', { name: 'ADD' }).click();
@@ -87,21 +84,56 @@ test('Hospitalization Periods', async () => {
       await page.waitForTimeout(8000);
     }
     else {
+      await expect(page.getByRole('cell').nth(3)).toBeEmpty();
+      //CEASE using RETURN button
       await page.getByRole('button', { name: 'RETURN FROM HOSPITALISATION' }).click();
-      await page.getByLabel('Ceased At *').fill(formatDate(randomDate('2022-12-31', '2023-02-01')));
+      await page.getByLabel('Ceased At *').fill(formatDate(randomDate('2022-12-01', '2022-12-30')));
       await page.getByRole('button', { name: 'CEASE' }).click();
       await page.getByText('Successfully ceased hospitalisation period.').isVisible();
       await page.getByRole('cell', { name: / .* Diane Curtis/ }).isVisible();
-
+      //DELETE RECORD
+      await page.locator('#fade-button').first().click();
+      await page.getByText('Delete').click();
+      await page.getByRole('heading', { name: 'Delete Hospitalisation Period?' }).isVisible();
+      await page.getByRole('button', { name: 'DELETE' }).click();
+      await page.getByText('Successfully deleted Hospitalisation Period.').isVisible();
+      await page.waitForTimeout(8000);
+      //RE-ADD RECORD
+      await page.getByRole('button', { name: 'ADD HOSPITALISATION PERIOD' }).click();
+      await page.getByRole('heading', { name: 'Add Hospitalisation Period' }).isVisible();
+      await page.waitForTimeout(8000);
+      await page.getByLabel('Date *').fill(formatDate(randomDate('2022-10-01', '2022-10-30')));
+      await page.getByLabel('Notes').click();
+      await page.getByLabel('Notes').fill('Add Hospitalization Period using playwright automation');
+      await page.getByRole('button', { name: 'ADD' }).click();
+      await expect(page.getByRole('cell', { name: 'Add Hospitalization Period using playwright automation' })).toBeVisible();
     }
-
-    // await page.getByRole('row', { name:'Add Hospitalization Period using playwright automation' }).first().locator('#fade-button').click();
-    // await page.getByRole('menuitem', { name: 'Update' }).click();
-    // await page.getByRole('heading', { name: 'Update Hospitalisaton Period' }).click();
-    // await page.getByLabel('Date *').fill('2023-02-02');
-    // await page.getByLabel('Notes').click();
-    // await page.getByLabel('Notes').press('Meta+a');
-    // await page.getByLabel('Notes').fill('Update Hospitalization Period using playwright automation');
-    // await page.getByRole('button', { name: 'UPDATE' }).click();
-    // await page.getByRole('cell', { name: 'Update Hospitalization Period using playwright automation' }).click();
+  //UPDATE RECORD
+    await page.getByRole('row', { name:'Add Hospitalization Period using playwright automation' }).first().locator('#fade-button').click();
+    await page.getByRole('menuitem', { name: 'Update' }).click();
+    await page.getByRole('heading', { name: 'Update Hospitalisaton Period' }).isVisible();
+    await page.getByLabel('Date *').fill(formatDate(randomDate('2022-11-01', '2022-11-30')));
+    await page.getByLabel('Notes').click();
+    await page.getByLabel('Notes').press('Meta+a');
+    await page.getByLabel('Notes').fill('Update Hospitalization Period using playwright automation');
+    await page.getByRole('button', { name: 'UPDATE' }).click();
+    await page.getByRole('cell', { name: 'Update Hospitalization Period using playwright automation' }).isVisible();
+    //CEASE RECORD from menu
+    await page.getByRole('row', { name:'Update Hospitalization Period using playwright automation' }).first().locator('#fade-button').click();
+    await page.getByRole('menuitem', { name: 'Cease' }).click();
+    await page.getByRole('heading', { name: 'Cease Hospitalisation Period?' }).isVisible();
+    await page.getByLabel('Ceased At *').fill(formatDate(randomDate('2023-01-01', '2023-01-30')));
+    await page.getByRole('heading', { name: 'Cease Hospitalisation Period?' }).click();
+    await (await page.waitForSelector('button', { state: 'visible' })).waitForElementState("visible");
+    await page.getByRole('button', { name: 'CEASE' }).click();
+    await page.getByText('Successfully ceased hospitalisation period.').isVisible();
+    await (await page.waitForSelector('button', { state: 'visible' })).waitForElementState("visible");
+    await expect(page.getByRole('button', { name: 'ADD HOSPITALISATION PERIOD' })).toBeVisible();
+    await expect(page.getByRole('cell', { name: / .* Diane Curtis .*/ })).toBeVisible();
+    //DELETE RECORD
+    await page.getByRole('row', { name:'Update Hospitalization Period using playwright automation' }).first().locator('#fade-button').click();
+    await page.getByText('Delete').click();
+    await page.getByRole('heading', { name: 'Delete Hospitalisation Period?' }).isVisible();
+    await page.getByRole('button', { name: 'DELETE' }).click();
+    await page.getByText('Successfully deleted Hospitalisation Period.').click();
 });
