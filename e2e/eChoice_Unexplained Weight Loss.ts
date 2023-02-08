@@ -30,7 +30,7 @@ test.afterAll(async () => {
 
 test('Select Resident', async () => {
     await page.getByRole('button', { name: 'Residents' }).click();
-    await page.getByRole('checkbox', { name: 'Adam Sandler 43 King-Smith Facility 01/01/2023 Diane Curtis 01/26/2023' }).click();
+    await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
     await page.waitForTimeout(8000);
 });
 
