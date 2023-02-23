@@ -91,14 +91,11 @@ test('Catheterisations', async () => {
     await page.locator('#fade-button').first().click();
     await page.getByRole('menuitem', { name: 'Uncease' }).click();
     await page.getByRole('button', { name: 'UNCEASE' }).click();
-    await page.getByText('Succesfully unceased catheterisation.').isVisible();
+    await page.getByText('Succesfully unceased catheterisation.').isVisible({timeout:10000});
     //DELETE Catheterisations
     await page.locator('xpath=//*[@id="tab-1"]').click({force:true});
     await page.waitForLoadState('networkidle');
     await page.locator('xpath=//*[@id="__next"]/div/main/div[2]/div/div[5]/div[2]/table/tbody/tr/td[2]').getByText('Update Catheterisation using playwright automation');
-    //await page.locator('[id="__next"] div').filter({ hasText: /.* Update Catheterisation using playwright automation .*/ }).nth(4).isVisible();
-    //await page.locator('td:nth-child(2)').first().isVisible();
-    //await expect(page.locator('.MuiTableBody-root > tr').first()).toBeVisible({timeout:10000});
     await page.locator('#fade-button').first().click({force:true});
     await page.getByText('Delete').click({force:true});
     await page.locator('xpath=/html/body/div[3]/div[3]/div').isEnabled();
