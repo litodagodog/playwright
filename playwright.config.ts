@@ -41,7 +41,7 @@ const config: PlaywrightTestConfig = {
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     video: 'on-first-retry',
-    baseURL: process.env.QA === '1' ? 'https://1c13-2001-4453-642-a700-e1e5-3228-81b-173d.ngrok.io' : 'https://1c13-2001-4453-642-a700-e1e5-3228-81b-173d.ngrok.io',
+    baseURL: process.env.QA === '1' ? 'https://a911-2001-4453-662-b800-8c30-5457-c351-2252.ngrok.io' : 'https://a911-2001-4453-662-b800-8c30-5457-c351-2252.ngrok.io',
 
     //storageState: 'storage-state/storageState.json',
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */

@@ -58,8 +58,7 @@ test('Falls Events', async () => {
   await page.getByLabel('Notes').fill('Updated Fall Event using playwright automation');
   await page.getByRole('button', { name: 'UPDATE' }).click();
   await page.getByText('Successfully updated fall event.').isVisible();
-  await page.waitForTimeout(8000);
-  await page.getByRole('cell', { name: 'Updated Fall Event using playwright automation' }).first().isVisible();
+  await page.getByRole('cell', { name: 'Updated Fall Event using playwright automation' }).first().isVisible({timeout:10000});
   //DELETE Fall Event
   await page.getByRole('row', { name: 'Updated Fall Event using playwright automation' }).first().locator('#fade-button').click();
   await page.getByText('Delete').click();

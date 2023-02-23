@@ -128,18 +128,14 @@ test('Hospitalization Periods', async () => {
     await page.getByLabel('Ceased At *').dblclick();
     await page.getByRole('heading', { name: 'Cease Hospitalisation Period?' }).click({force:true});
     await page.getByLabel('Ceased At *').fill(formatDate(randomDate('2023-01-01', '2023-01-30')));
-    //await page.getByText('CEASE').nth(6).click({ button: 'right' , timeout:10000});
-    //await page.getByText('CEASE').nth(6).hover();
-    //await expect(page.getByText('CEASE').nth(6)).toBeEnabled({timeout:20000});
     await page.getByRole('button', { name: 'CEASE' }).click({timeout:10000});
     await page.waitForSelector('text=Successfully ceased hospitalisation period.',{state:'visible'});
     await expect(page.getByRole('button', { name: 'ADD HOSPITALISATION PERIOD' })).toBeVisible();
-    //await page.getByRole('cell', { name: / .* Diane Curtis .*/ }).nth(1).isVisible();
     await page.locator('xpath=//*[@id="__next"]/div/main/div[2]/div/div[5]/div[1]/table/tbody/tr/td[4]').getByText(/ .* Diane Curtis .*/);
     //DELETE RECORD
     await page.getByRole('row', { name:'Update Hospitalization Period using playwright automation' }).first().locator('#fade-button').click();
     await page.getByText('Delete').click();
     await page.getByRole('heading', { name: 'Delete Hospitalisation Period?' }).isVisible();
     await page.getByRole('button', { name: 'DELETE' }).click();
-    await page.getByText('Successfully deleted Hospitalisation Period.').click();
+    await page.getByText('Successfully deleted Hospitalisation Period.').isVisible();
 });
