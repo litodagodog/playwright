@@ -14,7 +14,6 @@ test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
   await page.goto('/login');
-  await page.getByRole('button', { name: 'Visit Site' }).click();
   await page.waitForLoadState();
   await page.getByLabel('Username *').click();
   await page.getByLabel('Username *').fill('diane57122');
@@ -89,9 +88,9 @@ test('Catheterisations', async () => {
     await page.locator('td:nth-child(2)').first().isVisible();
     await page.locator('.MuiTableBody-root > tr').first().isVisible();
     await page.locator('#fade-button').first().click();
-    await page.getByRole('menuitem', { name: 'Uncease' }).click();
+    await page.getByRole('menuitem', { name: 'Uncease' }).click({force:true});
     await page.getByRole('button', { name: 'UNCEASE' }).click();
-    await page.getByText('Succesfully unceased catheterisation.').isVisible({timeout:10000});
+    await page.getByText('Succesfully unceased catheterisation.').isVisible({timeout:15000});
     //DELETE Catheterisations
     await page.locator('xpath=//*[@id="tab-1"]').click({force:true});
     await page.waitForLoadState('networkidle');

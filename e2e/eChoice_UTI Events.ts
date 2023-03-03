@@ -14,7 +14,6 @@ test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
   await page.goto('/login');
-  await page.getByRole('button', { name: 'Visit Site' }).click();
   await page.waitForLoadState();
   await page.getByLabel('Username *').click();
   await page.getByLabel('Username *').fill('diane57122');
