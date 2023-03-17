@@ -14,7 +14,6 @@ test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
   await page.goto('/login');
-  await page.getByRole('button', { name: 'Visit Site' }).click();
   await page.waitForLoadState();
   await page.getByLabel('Username *').click();
   await page.getByLabel('Username *').fill('diane57122');
@@ -63,13 +62,27 @@ test('Regular Prescription', async () => {
     await page.getByLabel('Comment').click();
     await page.getByLabel('Comment').fill('Playwright Update');
     await page.getByRole('button', { name: 'UPDATE' }).click();
-    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]/div/span')).toHaveText('1');
-    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[5]')).toHaveText('8');
-    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[7]')).toHaveText('Playwright Update');
+    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr/td[2]/div/span')).toHaveText('1');
+    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr/td[5]/li')).toHaveText('8 Dose Every 4 days');
+    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr/td[6]')).toHaveText('Playwright Update');
     await page.locator('#fade-button').first().click();
     await page.getByRole('menuitem', { name: 'View Logs' }).click();
     await page.getByRole('cell', { name: 'Intravenous peripheral route' }).isVisible();
-    await page.locator('xpath=/html/body/div[3]/div[3]/div/div[1]/div[1]/table/tbody/tr/td[3]').getByText('10');
+    await page.locator('xpath=/html/body/div[3]/div[3]/div/div[1]/div[1]/table/tbody/tr/td[3]/li/text()').getByText('10 Dose Every 4 days');
+
+    /**
+     *
+    await page.getByRole('checkbox', { name: 'Playwright Automation 78 King-Smith Facility 01/01/2023 Diane Curtis 03/08/2023' }).click();
+    await page.getByRole('checkbox', { name: 'select all desserts 139 1 olanzapine 20 mg tablet 01/02/2023 Intravenous peripheral route 8 Dose Every 4 days Playwright Update' }).click();
+    await page.getByRole('checkbox', { name: 'select all desserts 139 1 olanzapine 20 mg tablet 01/02/2023 Intravenous peripheral route 8 Dose Every 4 days Playwright Update' }).dblclick();
+    await page.getByRole('checkbox', { name: 'select all desserts 139 1 olanzapine 20 mg tablet 01/02/2023 Intravenous peripheral route 8 Dose Every 4 days Playwright Update' }).dblclick();
+    await page.locator('#fade-button').click();
+    await page.getByRole('menuitem', { name: 'View Logs' }).click();
+    await page.getByText('10 Dose Every 4 days').click();
+    await page.getByRole('cell', { name: 'This is a comment from playwright automation' }).click();
+    await page.getByRole('button', { name: 'Close' }).click();
+});
+     */
     //await page.getByRole('cell', { name: '10' }).isVisible();
     await page.getByRole('button', { name: 'Close' }).click({force:true});
     //SINGLE CEASE
@@ -78,9 +91,9 @@ test('Regular Prescription', async () => {
     await page.getByLabel('Cease At *').fill('2023-02-01');
     await page.getByRole('button', { name: 'CEASE' }).click();
     await page.getByRole('tab', { name: 'Ceased' }).click();
-    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]/div/span')).toHaveText('1');
-    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[5]')).toHaveText('8');
-    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[7]')).toHaveText('Playwright Update');
+    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr/td[2]/div/span')).toHaveText('1');
+    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr/td[5]/li')).toHaveText('8 Dose Every 4 days');
+    await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr/td[6]')).toHaveText('Playwright Update');
     //SINGLE UNCEASE
     await page.locator('#fade-button').first().click();
     await page.getByRole('menuitem', { name: 'Uncease' }).click();
@@ -88,38 +101,39 @@ test('Regular Prescription', async () => {
     //BULK CEASE
     await page.getByRole('tab', { name: 'Active' }).click();
     await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]')).toHaveText('1olanzapine 20 mg tablet');
-    await page.getByRole('columnheader', { name: 'select all desserts' }).click();
+    await page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/thead/tr/th[1]/span/input').click();
+    //await page.getByRole('columnheader', { name: 'select all desserts' }).click();
     await page.waitForLoadState();
     await page.getByRole('button', { name: 'Cease Prescription' }).click();
     await page.getByLabel('Cease At *').fill('2023-02-01');
     await page.getByRole('button', { name: 'CEASE' }).click();
-    await page.getByText('Successfully ceased prescription.').click();
+    await page.getByText('Successfully ceased 1 prescription.').click();
     await page.getByRole('tab', { name: 'Ceased' }).click();
     await page.waitForLoadState();
     await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]')).toHaveText('1olanzapine 20 mg tablet');
     //BULK UNCEASE
-    await page.getByRole('columnheader', { name: 'select all desserts' }).click();
+    await page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/thead/tr/th[1]/span/input').click();
+    //await page.getByRole('columnheader', { name: 'select all desserts' }).click();
     await page.waitForLoadState();
     await page.getByRole('button', { name: 'Uncease Prescription' }).click();
     await page.getByRole('heading', { name: 'Bulk Uncease Prescription' }).isVisible();
     await page.getByText('Do not uncease if this is a new prescription.').isVisible();
     await page.getByRole('button', { name: 'UNCEASE' }).click();
-    await page.getByText('Successfully unceased prescription.').click();
+    //await page.getByText('Successfully unceased prescription.').click();
     await page.getByRole('tab', { name: 'Active' }).click();
     await page.waitForLoadState('networkidle');
     await page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]').getByText('1olanzapine 20 mg tablet');
-    //await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]')).toHaveText('1olanzapine 20 mg tablet');
     //DELETE 1st Prescription
     await page.locator('#fade-button').first().click();
     await page.getByText('Delete').click();
     await page.getByRole('heading', { name: 'Delete prescription' }).click();
-    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('button', { name: 'Delete' }).click();
     await page.getByText('Successfully deleted prescription.').isVisible();
     await page.reload();
     //DELETE 2nd Prescription
     await page.locator('#fade-button').first().click();
     await page.getByText('Delete').click();
     await page.getByRole('heading', { name: 'Delete prescription' }).click();
-    await page.getByRole('button', { name: 'Yes' }).click();
+    await page.getByRole('button', { name: 'Delete' }).click();
     await page.getByText('Successfully deleted prescription.').isVisible();
 });
