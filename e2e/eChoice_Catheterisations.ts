@@ -102,5 +102,4 @@ test('Catheterisations', async () => {
     await page.getByText('* Only delete if this was entered by mistake.').isVisible();
     await page.getByText('DELETE').nth(3).isVisible();
     await page.getByRole('button', { name: 'DELETE' }).click({force:true});
-    await page.getByText('Successfully deleted catheterisation.').isVisible();
 });
