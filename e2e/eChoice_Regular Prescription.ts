@@ -69,21 +69,6 @@ test('Regular Prescription', async () => {
     await page.getByRole('menuitem', { name: 'View Logs' }).click();
     await page.getByRole('cell', { name: 'Intravenous peripheral route' }).isVisible();
     await page.locator('xpath=/html/body/div[3]/div[3]/div/div[1]/div[1]/table/tbody/tr/td[3]/li/text()').getByText('10 Dose Every 4 days');
-
-    /**
-     *
-    await page.getByRole('checkbox', { name: 'Playwright Automation 78 King-Smith Facility 01/01/2023 Diane Curtis 03/08/2023' }).click();
-    await page.getByRole('checkbox', { name: 'select all desserts 139 1 olanzapine 20 mg tablet 01/02/2023 Intravenous peripheral route 8 Dose Every 4 days Playwright Update' }).click();
-    await page.getByRole('checkbox', { name: 'select all desserts 139 1 olanzapine 20 mg tablet 01/02/2023 Intravenous peripheral route 8 Dose Every 4 days Playwright Update' }).dblclick();
-    await page.getByRole('checkbox', { name: 'select all desserts 139 1 olanzapine 20 mg tablet 01/02/2023 Intravenous peripheral route 8 Dose Every 4 days Playwright Update' }).dblclick();
-    await page.locator('#fade-button').click();
-    await page.getByRole('menuitem', { name: 'View Logs' }).click();
-    await page.getByText('10 Dose Every 4 days').click();
-    await page.getByRole('cell', { name: 'This is a comment from playwright automation' }).click();
-    await page.getByRole('button', { name: 'Close' }).click();
-});
-     */
-    //await page.getByRole('cell', { name: '10' }).isVisible();
     await page.getByRole('button', { name: 'Close' }).click({force:true});
     //SINGLE CEASE
     await page.locator('#fade-button').first().click();
@@ -102,7 +87,6 @@ test('Regular Prescription', async () => {
     await page.getByRole('tab', { name: 'Active' }).click();
     await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]')).toHaveText('1olanzapine 20 mg tablet');
     await page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/thead/tr/th[1]/span/input').click();
-    //await page.getByRole('columnheader', { name: 'select all desserts' }).click();
     await page.waitForLoadState();
     await page.getByRole('button', { name: 'Cease Prescription' }).click();
     await page.getByLabel('Cease At *').fill('2023-02-01');
@@ -113,13 +97,11 @@ test('Regular Prescription', async () => {
     await expect(page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]')).toHaveText('1olanzapine 20 mg tablet');
     //BULK UNCEASE
     await page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/thead/tr/th[1]/span/input').click();
-    //await page.getByRole('columnheader', { name: 'select all desserts' }).click();
     await page.waitForLoadState();
     await page.getByRole('button', { name: 'Uncease Prescription' }).click();
     await page.getByRole('heading', { name: 'Bulk Uncease Prescription' }).isVisible();
     await page.getByText('Do not uncease if this is a new prescription.').isVisible();
     await page.getByRole('button', { name: 'UNCEASE' }).click();
-    //await page.getByText('Successfully unceased prescription.').click();
     await page.getByRole('tab', { name: 'Active' }).click();
     await page.waitForLoadState('networkidle');
     await page.locator('//*[@id="__next"]/div/main/div[2]/div/div[5]/div[3]/table/tbody/tr[1]/td[2]').getByText('1olanzapine 20 mg tablet');
