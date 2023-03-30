@@ -51,26 +51,6 @@ test('Catheterisations', async () => {
     await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
     await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
     await page.waitForLoadState();
-    // //Check for Duplicate Entry(duplicate entry can be possible)
-    // const duplicateEntry = await page.getByText('Duplicate Catheterisation').isVisible();
-    // if ((duplicateEntry == true )){
-    //   //ADD Catheterisation even if duplicate is TRUE
-    //   await page.getByRole('button', { name: 'ADD' }).isEnabled();
-    //   await page.getByRole('button', { name: 'ADD' }).click();
-    //   await page.waitForTimeout(8000);
-    //   await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
-    //   await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
-    //   await page.waitForLoadState();
-    // }
-    // else{
-    //   //ADD Catheterisations
-    //   await page.getByRole('button', { name: 'ADD' }).isEnabled();
-    //   await page.getByRole('button', { name: 'ADD' }).click();
-    //   await page.waitForTimeout(8000);
-    //   await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
-    //   await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
-    //   await page.waitForLoadState();
-    // }
     //UPDATE Catheterisations 
     await page.locator('#fade-button').first().click();
     await page.getByRole('menuitem', { name: 'Update' }).click();
@@ -110,6 +90,4 @@ test('Catheterisations', async () => {
     await page.getByText('* Only delete if this was entered by mistake.').isVisible();
     await page.getByText('DELETE').nth(3).isVisible();
     await page.getByText('DELETE').nth(4).click();
-    //await page.locator('//*[@id=":r7:"]').click({force:true});
-    //await page.getByRole('button', { name: 'DELETE' }).nth(3).click({force:true});
 });
