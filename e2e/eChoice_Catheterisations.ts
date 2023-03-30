@@ -30,7 +30,7 @@ test.afterAll(async () => {
 test('Select Resident', async () => {
     await page.getByRole('button', { name: 'Residents' }).click();
     await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
-    await page.waitForTimeout(8000);
+    await page.waitForTimeout(5000);
 });
 
 test('Catheterisations', async () => {
@@ -44,26 +44,33 @@ test('Catheterisations', async () => {
     await page.getByLabel('Notes').click();
     await page.getByLabel('Notes').fill('Add Catheterisation using playwright automation');
     await page.waitForTimeout(9000);
-    //Check for Duplicate Entry(duplicate entry can be possible)
-    const duplicateEntry = await page.getByText('Duplicate Catheterisation').isVisible();
-    if ((duplicateEntry == true )){
-      //ADD Catheterisation even if duplicate is TRUE
-      await page.getByRole('button', { name: 'ADD' }).isEnabled();
-      await page.getByRole('button', { name: 'ADD' }).click();
-      await page.waitForTimeout(8000);
-      await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
-      await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
-      await page.waitForLoadState();
-    }
-    else{
-      //ADD Catheterisations
-      await page.getByRole('button', { name: 'ADD' }).isEnabled();
-      await page.getByRole('button', { name: 'ADD' }).click();
-      await page.waitForTimeout(8000);
-      await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
-      await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
-      await page.waitForLoadState();
-    }
+    //ADD Catheterisation
+    await page.getByRole('button', { name: 'ADD' }).isEnabled();
+    await page.getByRole('button', { name: 'ADD' }).click();
+    await page.waitForTimeout(8000);
+    await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
+    await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
+    await page.waitForLoadState();
+    // //Check for Duplicate Entry(duplicate entry can be possible)
+    // const duplicateEntry = await page.getByText('Duplicate Catheterisation').isVisible();
+    // if ((duplicateEntry == true )){
+    //   //ADD Catheterisation even if duplicate is TRUE
+    //   await page.getByRole('button', { name: 'ADD' }).isEnabled();
+    //   await page.getByRole('button', { name: 'ADD' }).click();
+    //   await page.waitForTimeout(8000);
+    //   await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
+    //   await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
+    //   await page.waitForLoadState();
+    // }
+    // else{
+    //   //ADD Catheterisations
+    //   await page.getByRole('button', { name: 'ADD' }).isEnabled();
+    //   await page.getByRole('button', { name: 'ADD' }).click();
+    //   await page.waitForTimeout(8000);
+    //   await page.getByRole('cell', { name: 'Add Catheterisation using playwright automation' }).first().isVisible();
+    //   await page.getByRole('cell', { name: /.* Diane Curtis/ }).first().isVisible();
+    //   await page.waitForLoadState();
+    // }
     //UPDATE Catheterisations 
     await page.locator('#fade-button').first().click();
     await page.getByRole('menuitem', { name: 'Update' }).click();
@@ -94,6 +101,7 @@ test('Catheterisations', async () => {
     //DELETE Catheterisations
     await page.locator('xpath=//*[@id="tab-1"]').click({force:true});
     await page.waitForLoadState('networkidle');
+    await page.reload();
     await page.locator('xpath=//*[@id="__next"]/div/main/div[2]/div/div[5]/div[2]/table/tbody/tr/td[2]').getByText('Update Catheterisation using playwright automation');
     await page.locator('#fade-button').first().click({force:true});
     await page.getByText('Delete').click({force:true});
@@ -101,5 +109,7 @@ test('Catheterisations', async () => {
     await page.getByRole('heading', { name: 'Delete Catheterisation?' }).isVisible();
     await page.getByText('* Only delete if this was entered by mistake.').isVisible();
     await page.getByText('DELETE').nth(3).isVisible();
-    await page.getByRole('button', { name: 'DELETE' }).click({force:true});
+    await page.getByText('DELETE').nth(4).click();
+    //await page.locator('//*[@id=":r7:"]').click({force:true});
+    //await page.getByRole('button', { name: 'DELETE' }).nth(3).click({force:true});
 });
