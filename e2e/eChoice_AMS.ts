@@ -13,13 +13,23 @@ test.use({
 test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
-  await page.goto('/login');
-  await page.waitForLoadState();
-  await page.getByLabel('Username *').click();
-  await page.getByLabel('Username *').fill('diane57122');
-  await page.getByLabel('Username *').press('Tab');
-  await page.getByLabel('Password *').fill('password');
+  // await page.goto('/login');
+  // await page.waitForLoadState();
+  // await page.getByLabel('Username *').click();
+  // await page.getByLabel('Username *').fill('diane57122');
+  // await page.getByLabel('Username *').press('Tab');
+  // await page.getByLabel('Password *').fill('password');
+  // await page.getByRole('button', { name: 'Sign in' }).click();
+  // await page.waitForLoadState();
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Sign in with Azure Active Directory' }).click();
+  await page.getByPlaceholder('Email, phone, or Skype').click();
+  await page.getByPlaceholder('Email, phone, or Skype').fill('pharmacist2@ddamasiggmail.onmicrosoft.com');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByPlaceholder('Password').click();
+  await page.getByPlaceholder('Password').fill('aApu689By5j^5^');
   await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Yes' }).click();
   await page.waitForLoadState();
 });
 
@@ -41,7 +51,7 @@ test('Anti-Microbial Stewarship', async () => {
     //ADD
     await page.getByRole('button', { name: 'ADD PRESCRIPTION' }).click();
     await page.getByPlaceholder('Search Medication').click();
-    await page.getByRole('option', { name: 'dactinomycin (actinomycin D) 500 microgram injection, vial' }).click();
+    await page.getByRole('option', { name: 'dactinomycin (actinomycin D) 500 microgram injection, vial' }). click();
     await page.getByText('This is an Antimicrobial Medication.').click();
     await page.getByLabel('Commenced *').fill('2023-03-01');
     await page.getByPlaceholder('Search Route').click();

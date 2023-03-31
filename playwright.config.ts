@@ -41,7 +41,8 @@ const config: PlaywrightTestConfig = {
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     video: 'on-first-retry',
-    baseURL: process.env.QA === '1' ? 'http://18.138.249.159' : 'http://18.138.249.159',
+    //baseURL: process.env.QA === '1' ? 'http://18.138.249.159' : 'http://18.138.249.159',
+    baseURL: process.env.QA === '1' ? 'Azure' : 'https://test.e-choice.online',
     //baseURL: process.env.STG === '2' ? 'https://stg.uplist.lanexus.com:3000' : 'https://stg.uplist.lanexus.com:3000',
 
     //storageState: 'storage-state/storageState.json',
