@@ -23,6 +23,7 @@ test.beforeAll(async ({ browser }) => {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.waitForLoadState();
+});
 
 test.afterAll(async () => {
   await page.close();
