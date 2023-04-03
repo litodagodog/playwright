@@ -13,13 +13,14 @@ test.use({
 test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
+  page = await browser.newPage();
   await page.goto('/');
   await page.getByRole('button', { name: 'Sign in with Azure Active Directory' }).click();
   await page.getByPlaceholder('Email, phone, or Skype').click();
-  await page.getByPlaceholder('Email, phone, or Skype').fill('pharmacist2@ddamasiggmail.onmicrosoft.com');
+  await page.getByPlaceholder('Email, phone, or Skype').fill(process.env.PHARMA);
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByPlaceholder('Password').click();
-  await page.getByPlaceholder('Password').fill('aApu689By5j^5^');
+  await page.getByPlaceholder('Password').fill(process.env.PHARMAPASS);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.waitForLoadState();

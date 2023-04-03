@@ -13,20 +13,13 @@ test.use({
 test.beforeAll(async ({ browser }) => {
   // Create page once and sign in.
   page = await browser.newPage();
-  // await page.goto('/login');
-  // await page.waitForLoadState();
-  // await page.getByLabel('Username *').click();
-  // await page.getByLabel('Username *').fill('dean');
-  // await page.getByLabel('Username *').press('Tab');
-  // await page.getByLabel('Password *').fill('password');
-  // await page.getByRole('button', { name: 'Sign in' }).click();
   await page.goto('/');
   await page.getByRole('button', { name: 'Sign in with Azure Active Directory' }).click();
   await page.getByPlaceholder('Email, phone, or Skype').click();
-  await page.getByPlaceholder('Email, phone, or Skype').fill('admin@ddamasiggmail.onmicrosoft.com');
+  await page.getByPlaceholder('Email, phone, or Skype').fill(process.env.ADMIN);
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByPlaceholder('Password').click();
-  await page.getByPlaceholder('Password').fill('ozaNa7jXH3Y$6w');
+  await page.getByPlaceholder('Password').fill(process.env.ADMINPASS);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
   await page.getByRole('listitem', { name: 'Account settings' }).getByText('Dean Damasig').isVisible();

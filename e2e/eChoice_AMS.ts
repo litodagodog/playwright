@@ -22,7 +22,6 @@ test.beforeAll(async ({ browser }) => {
   await page.getByPlaceholder('Password').fill(process.env.PHARMAPASS);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
-  await page.getByRole('listitem', { name: 'Account settings' }).getByText('Dean Damasig').isVisible();
   await page.waitForLoadState();
 });
 
