@@ -38,7 +38,7 @@ test('Select Resident', async () => {
 test('Unexplained Weight Loss', async () => {
     await page.getByRole('combobox').click();
     await page.getByRole('option', { name: 'Unexplained Weight Loss' }).click();
-    await page.getByText('Adam Sandler did not have an unexpected weight loss in the previous quarter.').isVisible();
+    await page.getByText('Playwright Automation did not have an unexpected weight loss in the previous quarter.').isVisible();
     await page.getByRole('button', { name: 'ADD WEIGHT LOSS' }).click();
     await page.getByRole('heading', { name: 'Add Weight Loss Record' }).isVisible();
     await page.getByPlaceholder('Search Year').click();
@@ -52,7 +52,7 @@ test('Unexplained Weight Loss', async () => {
     await page.waitForTimeout(8000);
     await page.getByRole('cell', { name: '2021 Q4' }).first().isVisible();
     await page.getByRole('cell', { name: 'Add Unexplained Weight Loss using playwright automation' }).first().isVisible();
-    await page.getByText('Adam Sandler has unexplained weight loss in the previous quarter.').isHidden();
+    await page.getByText('Playwright Automation has unexplained weight loss in the previous quarter.').isHidden();
     //UPDATE WEIGHT LOSS
     await page.getByRole('row', { name: 'Add Unexplained Weight Loss using playwright automation' }).first().locator('#fade-button').click();
     await page.getByRole('menuitem', { name: 'Update' }).click();
@@ -69,7 +69,7 @@ test('Unexplained Weight Loss', async () => {
     await page.waitForTimeout(8000);
     await page.getByRole('cell', { name: '2022 Q4' }).first().isVisible();
     await page.getByRole('cell', { name: 'Update Unexplained Weight Loss using playwright automation' }).first().isVisible();
-    await page.getByText('Adam Sandler has unexplained weight loss in the previous quarter.').isVisible();
+    await page.getByText('Playwright Automation has unexplained weight loss in the previous quarter.').isVisible();
     //DELETE WEIGHT LOSS
     await page.getByRole('row', { name: 'Update Unexplained Weight Loss using playwright automation' }).first().locator('#fade-button').click();
     await page.getByText('Delete').click();
