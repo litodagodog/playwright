@@ -82,8 +82,7 @@ test('Catheterisations', async () => {
     await page.getByText('Succesfully unceased catheterisation.').isVisible({timeout:15000});
     //DELETE Catheterisations
     await page.locator('xpath=//*[@id="tab-1"]').click({force:true});
-    await page.waitForLoadState('networkidle');
-    await page.reload();
+    await (await page.waitForSelector('xpath=//*[@id="__next"]/div/main/div[2]/div/div[5]/div[2]/table/tbody/tr/td[2]')).isVisible();
     await page.locator('xpath=//*[@id="__next"]/div/main/div[2]/div/div[5]/div[2]/table/tbody/tr/td[2]').getByText('Update Catheterisation using playwright automation');
     await page.locator('#fade-button').first().click({force:true});
     await page.getByText('Delete').click({force:true});

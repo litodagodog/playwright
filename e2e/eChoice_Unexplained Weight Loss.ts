@@ -67,7 +67,7 @@ test('Unexplained Weight Loss', async () => {
     await page.getByRole('button', { name: 'UPDATE' }).click();
     await page.getByText('Successfully updated Unexplained Weight Loss').isVisible();
     await page.waitForTimeout(8000);
-    await page.getByRole('cell', { name: '2021 Q4' }).first().isVisible();
+    await page.getByRole('cell', { name: '2022 Q4' }).first().isVisible();
     await page.getByRole('cell', { name: 'Update Unexplained Weight Loss using playwright automation' }).first().isVisible();
     await page.getByText('Adam Sandler has unexplained weight loss in the previous quarter.').isVisible();
     //DELETE WEIGHT LOSS

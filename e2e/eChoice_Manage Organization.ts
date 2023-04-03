@@ -37,7 +37,7 @@ test.afterAll(async () => {
   await page.close();
 });
 
-test('Manage Facilities', async () => {
+test('Manage Organization', async () => {
     //OPEN ORGANIZATION PAGE
     await page.getByRole('button', { name: 'Settings' }).click();
     await page.getByRole('menuitem', { name: 'Manage Organisation' }).click();

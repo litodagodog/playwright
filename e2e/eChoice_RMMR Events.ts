@@ -66,6 +66,7 @@ test('RMMR Events', async () => {
   await page.getByText('Delete').click();
   await page.getByRole('heading', { name: 'Delete RMMR Event' }).isVisible();
   await page.getByRole('button', { name: 'DELETE' }).click();
+  await page.waitForLoadState();
   await page.getByText('Successfully deleted RMMR Event.').isVisible();
   await page.getByRole('cell', { name: 'Updated RMMR Event using playwright automation' }).first().isHidden();
 });

@@ -66,5 +66,6 @@ test('Falls Events', async () => {
   await page.getByRole('heading', { name: 'Delete Fall Event' }).isVisible();
   await page.getByRole('button', { name: 'DELETE' }).click();
   await page.getByText('Successfully deleted fall Event.').isVisible();
+  await page.waitForTimeout(5000);
   await page.getByRole('cell', { name: 'Updated Fall Event using playwright automation' }).first().isHidden();
 });

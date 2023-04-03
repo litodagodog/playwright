@@ -63,7 +63,7 @@ test('Manage Facilities', async () => {
     await page.getByLabel('Search facility').click();
     await page.getByLabel('Search facility').type('Playwright');
     await page.waitForTimeout(10000);
-    await page.getByText('Facility Playwright').isVisible();
+    await page.getByText('Facility Playwright').nth(1).isVisible();
     await page.getByText('500').isVisible();
     await page.locator('#fade-button').click();
     await page.getByRole('menuitem', { name: 'Update' }).click();
@@ -87,7 +87,11 @@ test('Manage Facilities', async () => {
     await page.getByText('1000').isVisible();
     await page.locator('#fade-button').click();
     await page.getByText('Delete').click();
+    await page.getByText('YES').click();
     await page.getByText('Successfully deleted facility.').click();
+    await page.getByLabel('Search facility').type('Playwright');
+    page.waitForLoadState('networkidle');
+    await page.getByLabel('Search facility').click();
     await page.getByLabel('Search facility').type('Playwright');
     await expect(page.getByText('Facility Playwright Updated')).toBeHidden();
 });

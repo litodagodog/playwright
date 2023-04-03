@@ -138,5 +138,6 @@ test('Hospitalization Periods', async () => {
     await page.getByText('Delete').click();
     await page.getByRole('heading', { name: 'Delete Hospitalisation Period?' }).isVisible();
     await page.getByRole('button', { name: 'DELETE' }).click();
+    await page.waitForTimeout(5000);
     await page.getByText('Successfully deleted Hospitalisation Period.').isVisible();
 });
