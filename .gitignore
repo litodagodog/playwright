@@ -8,4 +8,4 @@ node_modules/
 /test-results/
 /playwright-report/
 /playwright/.cache/
-/e2e/.evn
+/e2e/.env
