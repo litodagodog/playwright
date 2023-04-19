@@ -83,6 +83,7 @@ test('Catheterisations', async () => {
     //DELETE Catheterisations
     await page.locator('xpath=//*[@id="tab-1"]').click({force:true});
     await (await page.waitForSelector('xpath=//*[@id="__next"]/div/main/div[2]/div/div[5]/div[2]/table/tbody/tr/td[2]')).isVisible();
+    await page.getByText('Update Catheterisation using playwright automation	').isVisible();
     await page.locator('xpath=//*[@id="__next"]/div/main/div[2]/div/div[5]/div[2]/table/tbody/tr/td[2]').getByText('Update Catheterisation using playwright automation');
     await page.locator('#fade-button').first().click({force:true});
     await page.getByText('Delete').click({force:true});
