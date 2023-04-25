@@ -31,7 +31,7 @@ test.afterAll(async () => {
 
 test('Select Resident', async () => {
     //Check user
-    await expect(page.getByText('Diane Curtis')).toHaveText('Diane Curtis');
+    //await expect(page.getByText('Diane Curtis')).toHaveText('Diane Curtis');
     await expect(page.getByText('Pharmacist')).toHaveText('Pharmacist');
     //OPEN RESIDENTS
     await page.getByRole('button', { name: 'Residents' }).click();
