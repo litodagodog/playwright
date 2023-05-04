@@ -30,7 +30,7 @@ test.beforeAll(async ({ browser }) => {
   await page.getByPlaceholder('Password').fill(process.env.ADMINPASS);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await page.getByRole('button', { name: 'Yes' }).click();
-  await page.getByRole('listitem', { name: 'Account settings' }).getByText('Dean Damasig').isVisible();
+  //await page.getByRole('listitem', { name: 'Account settings' }).getByText('Dean Damasig').isVisible();
   await page.waitForLoadState();
 });
 
@@ -54,7 +54,7 @@ test('Manage Facilities', async () => {
     await page.getByLabel('Address *').click();
     await page.getByLabel('Address *').fill('Facility Playwright');
     await page.getByPlaceholder('Search Organisation').click();
-    await page.getByRole('option', { name: 'Ortiz-Wilson' }).click();
+    await page.getByRole('option', { name: 'Morgan LLC' }).click();
     await page.getByLabel('Beds *').click();
     await page.getByLabel('Beds *').fill('500');
     await page.getByRole('button', { name: 'Submit' }).click();
