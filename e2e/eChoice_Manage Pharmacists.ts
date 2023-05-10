@@ -32,7 +32,7 @@ test.afterAll(async () => {
   await page.close();
 });
 
-test('Manage Facilities', async () => {
+test('Manage Pharmacists', async () => {
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.getByRole('menuitem', { name: 'Manage Pharmacists' }).click();
   await page.getByRole('button', { name: 'Create New Pharmacist' }).click();
