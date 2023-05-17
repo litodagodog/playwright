@@ -29,10 +29,33 @@ test.afterAll(async () => {
   await page.close();
 });
 
-test('Select Resident', async () => {
-    await page.getByRole('button', { name: 'Residents' }).click();
+test('Create and Select Resident', async () => {
+  //select facility
+  await page.getByRole('button', { name: 'Moore-Phillips FacilityChoice Aged Care 43738 Crystal Dam Suite 587 Simschester, NJ 97144' }).click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.waitForTimeout(10000);
+  const residentName = await page.getByText('Playwright Automation').isVisible();
+  if ((residentName == true)) {
     await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
     await page.waitForTimeout(8000);
+  }
+  else {
+    await page.getByRole('button', { name: 'Create New Resident' }).click();
+    await page.getByLabel('Given Name *').click();
+    await page.getByLabel('Given Name *').fill('Playwright');
+    await page.getByLabel('Given Name *').press('Tab');
+    await page.getByLabel('Surname *').fill('Automation');
+    await page.getByLabel('Medicare Number *').click();
+    await page.getByLabel('Medicare Number *').fill('12345');
+    await page.getByLabel('Date of Birth *').fill('1945-01-01');
+    await page.getByLabel('Admission Date *').fill('2023-03-03');
+    await page.getByLabel('Room Number').click();
+    await page.getByLabel('Room Number').fill('12345');
+    await page.getByRole('button', { name: 'Submit' }).click();
+    await page.waitForTimeout(5000);
+    await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
+    await page.waitForTimeout(6000);
+  }
 });
 
 test('Diagnoses', async () => {
@@ -57,11 +80,13 @@ test('Diagnoses', async () => {
     else {
       //Add Diagnosis
       await page.getByRole('button', { name: 'ADD' }).isEnabled();
-      await page.getByRole('button', { name: 'ADD' }).click({timeout:10000});
+      await page.getByRole('button', { name: 'ADD' }).click({force:true});
+      await page.waitForTimeout(10000);
       await page.getByRole('cell', { name: 'Percutaneous aspiration of renal pelvis' }).isVisible();
       await page.getByRole('cell', { name: 'This note is from playwright automation' }).isVisible();
       //Update Diagnosis
       await page.getByRole('row', { name: /Percutaneous aspiration of renal pelvis .*/ }).locator('#fade-button').click();
+      await page.waitForTimeout(5000);
       await page.getByRole('menuitem', { name: 'Update' }).click();
       await page.getByRole('heading', { name: 'Update Diagnosis' }).isVisible();
       await page.getByPlaceholder('Search Diagnosis').click();

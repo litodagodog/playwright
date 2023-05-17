@@ -83,14 +83,15 @@ test('Manage Facilities', async () => {
     await page.getByLabel('RACID').press('Tab');
     await page.getByLabel('ABN').fill('DEF');
     await page.getByRole('button', { name: 'Submit' }).click();
+    await page.waitForLoadState('networkidle');
     await page.getByText('Facility Playwright Updated').isVisible();
     await page.getByText('1000').isVisible();
+    await page.waitForSelector('#fade-button');
     await page.locator('#fade-button').click();
     await page.getByText('Delete').click();
     await page.getByText('YES').click();
     await page.getByText('Successfully deleted facility.').click();
     await page.getByLabel('Search facility').type('Playwright');
-    page.waitForLoadState('networkidle');
     await page.getByLabel('Search facility').click();
     await page.getByLabel('Search facility').type('Playwright');
     await expect(page.getByText('Facility Playwright Updated')).toBeHidden();

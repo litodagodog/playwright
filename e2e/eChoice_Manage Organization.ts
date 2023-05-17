@@ -52,8 +52,9 @@ test('Manage Organization', async () => {
     await page.getByLabel('Notes').fill('Playwright notes');
     await page.getByRole('button', { name: 'Submit' }).click();
     //CHECK IF NEW ORGANIZATION IS CREATED and DISPLAYED in the list
-    await page.getByText('Playwright Organization').isVisible();
+    await page.getByText('Playwright Organization').nth(1).isVisible();
     //UPDATE ORGANIZATION
+    await page.waitForTimeout(10000);
     await page.getByRole('checkbox', { name: /Playwright Organization .*/ }).locator('#fade-button').click();
     await page.getByRole('menuitem', { name: 'Update' }).click();
     await page.getByLabel('Name *').click();
