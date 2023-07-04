@@ -30,7 +30,7 @@ test.afterAll(async () => {
 });
 
 test('Select Resident', async () => {
-  await page.getByRole('button', { name: 'Facility Playwright UpdatedMorgan LLC Facility Playwright Updated' }).click();
+await page.getByRole('button', { name: /Facility Playwright Updated .*/ }).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.waitForTimeout(10000);
     //await page.getByRole('button', { name: 'Residents' }).click();
