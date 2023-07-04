@@ -31,10 +31,10 @@ test.afterAll(async () => {
 });
 
 test('Select Resident', async () => {
-  await page.getByRole('button', { name: 'Moore-Phillips FacilityChoice Aged Care 43738 Crystal Dam Suite 587 Simschester, NJ 97144' }).click();
+  await page.getByRole('button', { name: 'Facility Playwright UpdatedMorgan LLC Facility Playwright Updated' }).nth(1).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.waitForTimeout(10000);
-    await page.getByRole('button', { name: 'Residents' }).click();
+    //await page.getByRole('button', { name: 'Residents' }).click();
     await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
     await page.waitForTimeout(8000);
 });
