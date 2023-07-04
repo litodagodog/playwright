@@ -30,12 +30,11 @@ test.afterAll(async () => {
 });
 
 test('Select Resident', async () => {
-await page.getByRole('button', { name: /Facility Playwright Updated .*/ }).click();
+  await page.getByRole('button', { name: 'Facility Playwright UpdatedMorgan LLC Facility Playwright Updated' }).first().click();
   await page.getByRole('button', { name: 'Continue' }).click();
-  await page.waitForTimeout(10000);
-    //await page.getByRole('button', { name: 'Residents' }).click();
-    await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
-    await page.waitForTimeout(8000);
+  await page.waitForTimeout(8000);
+  await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
+  await page.waitForTimeout(8000);
 });
 
 test('Falls Events', async () => {
