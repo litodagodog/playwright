@@ -55,6 +55,11 @@ class BrowserDispatcher extends _dispatcher.Dispatcher {
   async killForTests() {
     await this._object.killForTests();
   }
+  async defaultUserAgentForTest() {
+    return {
+      userAgent: this._object.userAgent()
+    };
+  }
   async newBrowserCDPSession() {
     if (!this._object.options.isChromium) throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object;
@@ -109,6 +114,9 @@ class ConnectedBrowserDispatcher extends _dispatcher.Dispatcher {
   }
   async killForTests() {
     // Client should not send us Browser.killForTests.
+  }
+  async defaultUserAgentForTest() {
+    throw new Error('Client should not send us Browser.defaultUserAgentForTest');
   }
   async newBrowserCDPSession() {
     if (!this._object.options.isChromium) throw new Error(`CDP session is only available in Chromium`);

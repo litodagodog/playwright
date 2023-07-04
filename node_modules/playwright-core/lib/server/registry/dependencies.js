@@ -20,7 +20,7 @@ var _spawnAsync = require("../../utils/spawnAsync");
 var _hostPlatform = require("../../utils/hostPlatform");
 var _ = require(".");
 var _nativeDeps = require("./nativeDeps");
-var _userAgent = require("../../common/userAgent");
+var _userAgent = require("../../utils/userAgent");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -41,7 +41,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  */
 
 const BIN_DIRECTORY = _path.default.join(__dirname, '..', '..', '..', 'bin');
-const packageJSON = require('../../../package.json');
+const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || require('../../../package.json').version;
 const dockerVersionFilePath = '/ms-playwright/.docker-info';
 async function writeDockerVersion(dockerImageNameTemplate) {
   await _fs.default.promises.mkdir(_path.default.dirname(dockerVersionFilePath), {
@@ -53,8 +53,8 @@ async function writeDockerVersion(dockerImageNameTemplate) {
 }
 function dockerVersion(dockerImageNameTemplate) {
   return {
-    driverVersion: packageJSON.version,
-    dockerImageName: dockerImageNameTemplate.replace('%version%', packageJSON.version)
+    driverVersion: languageBindingVersion,
+    dockerImageName: dockerImageNameTemplate.replace('%version%', languageBindingVersion)
   };
 }
 function readDockerVersionSync() {

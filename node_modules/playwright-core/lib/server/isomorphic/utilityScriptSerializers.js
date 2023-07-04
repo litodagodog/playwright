@@ -23,13 +23,25 @@ exports.source = source;
 
 function source() {
   function isRegExp(obj) {
-    return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+    try {
+      return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+    } catch (error) {
+      return false;
+    }
   }
   function isDate(obj) {
-    return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+    try {
+      return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+    } catch (error) {
+      return false;
+    }
   }
   function isURL(obj) {
-    return obj instanceof URL || Object.prototype.toString.call(obj) === '[object URL]';
+    try {
+      return obj instanceof URL || Object.prototype.toString.call(obj) === '[object URL]';
+    } catch (error) {
+      return false;
+    }
   }
   function isError(obj) {
     try {

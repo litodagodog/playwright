@@ -116,6 +116,9 @@ class WKExecutionContext {
       objectId
     });
   }
+  objectCount(objectId) {
+    throw new Error('Method not implemented in WebKit.');
+  }
 }
 exports.WKExecutionContext = WKExecutionContext;
 function potentiallyUnserializableValue(remoteObject) {
@@ -138,13 +141,6 @@ function renderPreview(object) {
     } of object.preview.properties) tokens.push(`${name}: ${value}`);
     return `{${tokens.join(', ')}}`;
   }
-  if (object.subtype === 'array' && object.preview) {
-    const result = [];
-    for (const {
-      name,
-      value
-    } of object.preview.properties) result[+name] = value;
-    return '[' + String(result) + ']';
-  }
+  if (object.subtype === 'array' && object.preview) return js.sparseArrayToString(object.preview.properties);
   return object.description;
 }

@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.TimeoutRunnerError = exports.TimeoutRunner = void 0;
+exports.pollAgainstTimeout = pollAgainstTimeout;
 exports.raceAgainstTimeout = raceAgainstTimeout;
 var _manualPromise = require("./manualPromise");
 var _ = require("./");
@@ -95,4 +96,33 @@ async function raceAgainstTimeout(cb, timeout) {
     };
     throw e;
   }
+}
+async function pollAgainstTimeout(callback, timeout, pollIntervals = [100, 250, 500, 1000]) {
+  var _pollIntervals$pop;
+  const startTime = (0, _.monotonicTime)();
+  const lastPollInterval = (_pollIntervals$pop = pollIntervals.pop()) !== null && _pollIntervals$pop !== void 0 ? _pollIntervals$pop : 1000;
+  let lastResult;
+  const wrappedCallback = () => Promise.resolve().then(callback);
+  while (true) {
+    var _shift;
+    const elapsed = (0, _.monotonicTime)() - startTime;
+    if (timeout !== 0 && elapsed >= timeout) break;
+    const received = timeout !== 0 ? await raceAgainstTimeout(wrappedCallback, timeout - elapsed) : await wrappedCallback().then(value => ({
+      result: value,
+      timedOut: false
+    }));
+    if (received.timedOut) break;
+    lastResult = received.result.result;
+    if (!received.result.continuePolling) return {
+      result: lastResult,
+      timedOut: false
+    };
+    const interval = (_shift = pollIntervals.shift()) !== null && _shift !== void 0 ? _shift : lastPollInterval;
+    if (timeout !== 0 && startTime + timeout <= (0, _.monotonicTime)() + interval) break;
+    await new Promise(x => setTimeout(x, interval));
+  }
+  return {
+    timedOut: true,
+    result: lastResult
+  };
 }

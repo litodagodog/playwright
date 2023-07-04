@@ -55,7 +55,6 @@ class CRPage {
   // simultaneously call window.open with window features: the order
   // of their Page.windowOpen events is not guaranteed to match the order
   // of new popup targets.
-
   static mainFrameSession(page) {
     const crPage = page._delegate;
     return crPage._mainFrameSession;
@@ -160,7 +159,7 @@ class CRPage {
   }
   async exposeBinding(binding) {
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
-    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source, false, {}).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame.evaluateExpression(binding.source).catch(e => {})));
   }
   async removeExposedBindings() {
     await this._forAllFrameSessions(frame => frame._removeExposedBindings());
@@ -314,6 +313,7 @@ class CRPage {
   async inputActionEpilogue() {
     await this._mainFrameSession._client.send('Page.enable').catch(e => {});
   }
+  async resetForReuse() {}
   async pdf(options) {
     return this._pdf.generate(options);
   }
@@ -341,7 +341,6 @@ exports.CRPage = CRPage;
 class FrameSession {
   // Marks the oopif session that remote -> local transition has happened in the parent.
   // See Target.detachedFromTarget handler for details.
-
   constructor(crPage, client, targetId, parentSession) {
     this._client = void 0;
     this._crPage = void 0;
@@ -430,8 +429,8 @@ class FrameSession {
           grantUniveralAccess: true,
           worldName: UTILITY_WORLD_NAME
         });
-        for (const binding of this._crPage._browserContext._pageBindings.values()) frame.evaluateExpression(binding.source, false, undefined).catch(e => {});
-        for (const source of this._crPage._browserContext.initScripts) frame.evaluateExpression(source, false, undefined, 'main').catch(e => {});
+        for (const binding of this._crPage._browserContext._pageBindings.values()) frame.evaluateExpression(binding.source).catch(e => {});
+        for (const source of this._crPage._browserContext.initScripts) frame.evaluateExpression(source).catch(e => {});
       }
       const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
       if (isInitialEmptyPage) {
@@ -719,7 +718,7 @@ class FrameSession {
   }
   _onDialog(event) {
     if (!this._page._frameManager.frame(this._targetId)) return; // Our frame/subtree may be gone already.
-    this._page.emit(_page.Page.Events.Dialog, new dialog.Dialog(this._page, event.type, event.message, async (accept, promptText) => {
+    this._page.emitOnContext(_browserContext.BrowserContext.Events.Dialog, new dialog.Dialog(this._page, event.type, event.message, async (accept, promptText) => {
       await this._client.send('Page.handleJavaScriptDialog', {
         accept,
         promptText
@@ -790,7 +789,7 @@ class FrameSession {
   }
   async _createVideoRecorder(screencastId, options) {
     (0, _utils.assert)(!this._screencastId);
-    const ffmpegPath = _registry.registry.findExecutable('ffmpeg').executablePathOrDie(this._page._browserContext._browser.options.sdkLanguage);
+    const ffmpegPath = _registry.registry.findExecutable('ffmpeg').executablePathOrDie(this._page.attribution.playwright.options.sdkLanguage);
     this._videoRecorder = await _videoRecorder.VideoRecorder.launch(this._crPage._page, ffmpegPath, options);
     this._screencastId = screencastId;
   }

@@ -40,9 +40,9 @@ class StreamImpl extends _stream.Readable {
     this._channel = void 0;
     this._channel = channel;
   }
-  async _read(size) {
+  async _read() {
     const result = await this._channel.read({
-      size
+      size: 1024 * 1024
     });
     if (result.binary.byteLength) this.push(result.binary);else this.push(null);
   }

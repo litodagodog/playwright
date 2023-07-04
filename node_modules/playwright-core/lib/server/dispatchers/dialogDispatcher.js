@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.DialogDispatcher = void 0;
 var _dispatcher = require("./dispatcher");
+var _pageDispatcher = require("./pageDispatcher");
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -23,7 +24,10 @@ var _dispatcher = require("./dispatcher");
 
 class DialogDispatcher extends _dispatcher.Dispatcher {
   constructor(scope, dialog) {
-    super(scope, dialog, 'Dialog', {
+    const page = _pageDispatcher.PageDispatcher.fromNullable(scope, dialog.page().initializedOrUndefined());
+    // Prefer scoping to the page, unless we don't have one.
+    super(page || scope, dialog, 'Dialog', {
+      page,
       type: dialog.type(),
       message: dialog.message(),
       defaultValue: dialog.defaultValue()

@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.Dialog = void 0;
 var _channelOwner = require("./channelOwner");
+var _page = require("./page");
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -27,6 +28,13 @@ class Dialog extends _channelOwner.ChannelOwner {
   }
   constructor(parent, type, guid, initializer) {
     super(parent, type, guid, initializer);
+    // Note: dialogs that open early during page initialization block it.
+    // Therefore, we must report the dialog without a page to be able to handle it.
+    this._page = void 0;
+    this._page = _page.Page.fromNullable(initializer.page);
+  }
+  page() {
+    return this._page;
   }
   type() {
     return this._initializer.type;

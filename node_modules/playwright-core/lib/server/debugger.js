@@ -112,6 +112,7 @@ Debugger.Events = {
 };
 function shouldPauseOnCall(sdkObject, metadata) {
   var _sdkObject$attributio;
+  if (sdkObject.attribution.playwright.options.isServer) return false;
   if (!((_sdkObject$attributio = sdkObject.attribution.browser) !== null && _sdkObject$attributio !== void 0 && _sdkObject$attributio.options.headful) && !(0, _utils.isUnderTest)()) return false;
   return metadata.method === 'pause';
 }
@@ -127,5 +128,5 @@ function shouldPauseBeforeStep(metadata) {
   return _debug.commandsWithTracingSnapshots.has(step) && !_debug.pausesBeforeInputActions.has(metadata.type + '.' + metadata.method);
 }
 function shouldSlowMo(metadata) {
-  return _debug.commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
+  return _debug.slowMoActions.has(metadata.type + '.' + metadata.method);
 }

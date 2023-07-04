@@ -9,3 +9,6 @@ node_modules/
 /playwright-report/
 /playwright/.cache/
 /e2e/.env
+/test-results/
+/playwright-report/
+/playwright/.cache/

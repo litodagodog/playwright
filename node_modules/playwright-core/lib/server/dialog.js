@@ -39,6 +39,9 @@ class Dialog extends _instrumentation.SdkObject {
     this._defaultValue = defaultValue || '';
     this._page._frameManager.dialogDidOpen(this);
   }
+  page() {
+    return this._page;
+  }
   type() {
     return this._type;
   }

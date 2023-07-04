@@ -35,16 +35,16 @@ class TracingDispatcher extends _dispatcher.Dispatcher {
     await this._object.start(params);
   }
   async tracingStartChunk(params) {
-    await this._object.startChunk(params);
+    return await this._object.startChunk(params);
   }
   async tracingStopChunk(params) {
     const {
       artifact,
-      sourceEntries
+      entries
     } = await this._object.stopChunk(params);
     return {
       artifact: artifact ? _artifactDispatcher.ArtifactDispatcher.from(this, artifact) : undefined,
-      sourceEntries
+      entries
     };
   }
   async tracingStop(params) {

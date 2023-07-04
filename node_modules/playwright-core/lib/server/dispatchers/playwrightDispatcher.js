@@ -15,6 +15,7 @@ var _networkDispatchers = require("./networkDispatchers");
 var _selectorsDispatcher = require("./selectorsDispatcher");
 var _browserDispatcher = require("./browserDispatcher");
 var _utils = require("../../utils");
+var _eventsHelper = require("../../utils/eventsHelper");
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -59,7 +60,7 @@ class PlaywrightDispatcher extends _dispatcher.Dispatcher {
     this._type_Playwright = true;
     this._browserDispatcher = browserDispatcher;
   }
-  async newRequest(params, metadata) {
+  async newRequest(params) {
     const request = new _fetch.GlobalAPIRequestContext(this._object, params);
     return {
       request: _networkDispatchers.APIRequestContextDispatcher.from(this.parentScope(), request)
@@ -79,11 +80,10 @@ class SocksSupportDispatcher extends _dispatcher.Dispatcher {
     }, 'SocksSupport', {});
     this._type_SocksSupport = void 0;
     this._socksProxy = void 0;
+    this._socksListeners = void 0;
     this._type_SocksSupport = true;
     this._socksProxy = socksProxy;
-    socksProxy.on(_socksProxy.SocksProxy.Events.SocksRequested, payload => this._dispatchEvent('socksRequested', payload));
-    socksProxy.on(_socksProxy.SocksProxy.Events.SocksData, payload => this._dispatchEvent('socksData', payload));
-    socksProxy.on(_socksProxy.SocksProxy.Events.SocksClosed, payload => this._dispatchEvent('socksClosed', payload));
+    this._socksListeners = [_eventsHelper.eventsHelper.addEventListener(socksProxy, _socksProxy.SocksProxy.Events.SocksRequested, payload => this._dispatchEvent('socksRequested', payload)), _eventsHelper.eventsHelper.addEventListener(socksProxy, _socksProxy.SocksProxy.Events.SocksData, payload => this._dispatchEvent('socksData', payload)), _eventsHelper.eventsHelper.addEventListener(socksProxy, _socksProxy.SocksProxy.Events.SocksClosed, payload => this._dispatchEvent('socksClosed', payload))];
   }
   async socksConnected(params) {
     var _this$_socksProxy;
@@ -104,5 +104,8 @@ class SocksSupportDispatcher extends _dispatcher.Dispatcher {
   async socksEnd(params) {
     var _this$_socksProxy5;
     (_this$_socksProxy5 = this._socksProxy) === null || _this$_socksProxy5 === void 0 ? void 0 : _this$_socksProxy5.sendSocketEnd(params);
+  }
+  _onDispose() {
+    _eventsHelper.eventsHelper.removeEventListeners(this._socksListeners);
   }
 }

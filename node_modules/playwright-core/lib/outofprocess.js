@@ -41,10 +41,8 @@ class PlaywrightClient {
     this._playwright = void 0;
     this._driverProcess = void 0;
     this._closePromise = new _manualPromise.ManualPromise();
-    this._transport = void 0;
-    this._stopped = false;
     this._driverProcess = childProcess.fork(path.join(__dirname, 'cli', 'cli.js'), ['run-driver'], {
-      stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
+      stdio: 'pipe',
       detached: true,
       env: {
         ...process.env,
@@ -52,21 +50,19 @@ class PlaywrightClient {
       }
     });
     this._driverProcess.unref();
-    this._driverProcess.on('exit', this._onExit.bind(this));
-    const connection = new _connection.Connection();
+    this._driverProcess.stderr.on('data', data => process.stderr.write(data));
+    const connection = new _connection.Connection(undefined, undefined);
     connection.markAsRemote();
-    this._transport = new _transport.IpcTransport(this._driverProcess);
-    connection.onmessage = message => this._transport.send(JSON.stringify(message));
-    this._transport.onmessage = message => connection.dispatch(JSON.parse(message));
-    this._transport.onclose = () => this._closePromise.resolve();
+    const transport = new _transport.PipeTransport(this._driverProcess.stdin, this._driverProcess.stdout);
+    connection.onmessage = message => transport.send(JSON.stringify(message));
+    transport.onmessage = message => connection.dispatch(JSON.parse(message));
+    transport.onclose = () => this._closePromise.resolve();
     this._playwright = connection.initializePlaywright();
   }
   async stop() {
-    this._stopped = true;
-    this._transport.close();
+    this._driverProcess.stdin.destroy();
+    this._driverProcess.stdout.destroy();
+    this._driverProcess.stderr.destroy();
     await this._closePromise;
-  }
-  _onExit(exitCode, signal) {
-    if (this._stopped) this._closePromise.resolve();else throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
   }
 }

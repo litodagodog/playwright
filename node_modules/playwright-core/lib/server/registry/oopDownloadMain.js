@@ -2,7 +2,7 @@
 
 var _fs = _interopRequireDefault(require("fs"));
 var _utilsBundle = require("../../utilsBundle");
-var _netUtils = require("../../common/netUtils");
+var _network = require("../../utils/network");
 var _manualPromise = require("../../utils/manualPromise");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 /**
@@ -32,7 +32,7 @@ function downloadFile(url, destinationPath, options) {
   let downloadedBytes = 0;
   let totalBytes = 0;
   const promise = new _manualPromise.ManualPromise();
-  (0, _netUtils.httpRequest)({
+  (0, _network.httpRequest)({
     url,
     headers: {
       'User-Agent': options.userAgent

@@ -16,6 +16,7 @@ var _ffNetworkManager = require("./ffNetworkManager");
 var _stackTrace = require("../../utils/stackTrace");
 var _debugLogger = require("../../common/debugLogger");
 var _manualPromise = require("../../utils/manualPromise");
+var _browserContext = require("../browserContext");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -206,7 +207,7 @@ class FFPage {
     this._page._addConsoleMessage(type, args.map(arg => context.createHandle(arg)), location);
   }
   _onDialogOpened(params) {
-    this._page.emit(_page.Page.Events.Dialog, new dialog.Dialog(this._page, params.type, params.message, async (accept, promptText) => {
+    this._page.emitOnContext(_browserContext.BrowserContext.Events.Dialog, new dialog.Dialog(this._page, params.type, params.message, async (accept, promptText) => {
       await this._session.sendMayFail('Page.handleDialog', {
         dialogId: params.dialogId,
         accept,
@@ -354,9 +355,7 @@ class FFPage {
   }
 
   async reload() {
-    await this._session.send('Page.reload', {
-      frameId: this._page.mainFrame()._id
-    });
+    await this._session.send('Page.reload');
   }
   async goBack() {
     const {
@@ -416,6 +415,7 @@ class FFPage {
     } = await this._session.send('Page.screenshot', {
       mimeType: 'image/' + format,
       clip: documentRect,
+      quality,
       omitDeviceScaleFactor: scale === 'css'
     });
     return Buffer.from(data, 'base64');
@@ -534,6 +534,13 @@ class FFPage {
     return (0, _ffAccessibility.getAccessibilityTree)(this._session, needle);
   }
   async inputActionEpilogue() {}
+  async resetForReuse() {
+    // Firefox sometimes keeps the last mouse position in the page,
+    // which affects things like hovered state.
+    // See https://github.com/microsoft/playwright/issues/22432.
+    // Move mouse to (-1, -1) to avoid anything being hovered.
+    await this.rawMouse.move(-1, -1, 'none', new Set(), new Set(), false);
+  }
   async getFrameElement(frame) {
     const parent = frame.parentFrame();
     if (!parent) throw new Error('Frame has been detached.');

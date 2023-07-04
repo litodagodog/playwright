@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Video = void 0;
+var _utils = require("../utils");
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -23,13 +24,13 @@ exports.Video = void 0;
 class Video {
   constructor(page, connection) {
     this._artifact = null;
-    this._artifactCallback = artifact => {};
+    this._artifactReadyPromise = new _utils.ManualPromise();
     this._isRemote = false;
     this._isRemote = connection.isRemote();
-    this._artifact = Promise.race([new Promise(f => this._artifactCallback = f), page._closedOrCrashedPromise.then(() => null)]);
+    this._artifact = page._closedOrCrashedRace.safeRace(this._artifactReadyPromise);
   }
   _artifactReady(artifact) {
-    this._artifactCallback(artifact);
+    this._artifactReadyPromise.resolve(artifact);
   }
   async path() {
     if (this._isRemote) throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);

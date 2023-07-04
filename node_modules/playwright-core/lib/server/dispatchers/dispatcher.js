@@ -91,8 +91,10 @@ class Dispatcher extends _events.EventEmitter {
     this._disposeRecursively();
     this._connection.sendDispose(this);
   }
+  _onDispose() {}
   _disposeRecursively() {
     (0, _utils.assert)(!this._disposed, `${this._guid} is disposed more than once`);
+    this._onDispose();
     this._disposed = true;
     _eventsHelper.eventsHelper.removeEventListeners(this._eventListeners);
 
@@ -172,22 +174,16 @@ class DispatcherConnection {
   }
   _sendMessageToClient(guid, type, method, params, sdkObject) {
     if (sdkObject) {
-      var _sdkObject$attributio, _sdkObject$attributio2, _sdkObject$attributio3, _sdkObject$attributio4, _sdkObject$instrument;
-      const eventMetadata = {
-        id: `event@${++lastEventId}`,
-        objectId: sdkObject === null || sdkObject === void 0 ? void 0 : sdkObject.guid,
-        pageId: sdkObject === null || sdkObject === void 0 ? void 0 : (_sdkObject$attributio = sdkObject.attribution) === null || _sdkObject$attributio === void 0 ? void 0 : (_sdkObject$attributio2 = _sdkObject$attributio.page) === null || _sdkObject$attributio2 === void 0 ? void 0 : _sdkObject$attributio2.guid,
-        frameId: sdkObject === null || sdkObject === void 0 ? void 0 : (_sdkObject$attributio3 = sdkObject.attribution) === null || _sdkObject$attributio3 === void 0 ? void 0 : (_sdkObject$attributio4 = _sdkObject$attributio3.frame) === null || _sdkObject$attributio4 === void 0 ? void 0 : _sdkObject$attributio4.guid,
-        wallTime: Date.now(),
-        startTime: (0, _utils.monotonicTime)(),
-        endTime: 0,
-        type,
+      var _sdkObject$attributio, _sdkObject$attributio2, _sdkObject$instrument;
+      const event = {
+        type: 'event',
+        class: type,
         method,
         params: params || {},
-        log: [],
-        snapshots: []
+        time: (0, _utils.monotonicTime)(),
+        pageId: sdkObject === null || sdkObject === void 0 ? void 0 : (_sdkObject$attributio = sdkObject.attribution) === null || _sdkObject$attributio === void 0 ? void 0 : (_sdkObject$attributio2 = _sdkObject$attributio.page) === null || _sdkObject$attributio2 === void 0 ? void 0 : _sdkObject$attributio2.guid
       };
-      (_sdkObject$instrument = sdkObject.instrumentation) === null || _sdkObject$instrument === void 0 ? void 0 : _sdkObject$instrument.onEvent(sdkObject, eventMetadata);
+      (_sdkObject$instrument = sdkObject.instrumentation) === null || _sdkObject$instrument === void 0 ? void 0 : _sdkObject$instrument.onEvent(sdkObject, event);
     }
     this.onmessage({
       guid,
@@ -215,7 +211,7 @@ class DispatcherConnection {
     throw new _validator.ValidationError(`${path}: expected dispatcher ${names.toString()}`);
   }
   async dispatch(message) {
-    var _sdkObject$attributio5, _sdkObject$attributio6, _sdkObject$attributio7, _sdkObject$attributio8, _params$info;
+    var _sdkObject$attributio3, _sdkObject$attributio4, _sdkObject$attributio5, _sdkObject$attributio6, _params$info;
     const {
       id,
       guid,
@@ -254,20 +250,19 @@ class DispatcherConnection {
     const sdkObject = dispatcher._object instanceof _instrumentation.SdkObject ? dispatcher._object : undefined;
     const callMetadata = {
       id: `call@${id}`,
-      stack: validMetadata.stack,
+      wallTime: validMetadata.wallTime || Date.now(),
+      location: validMetadata.location,
       apiName: validMetadata.apiName,
       internal: validMetadata.internal,
       objectId: sdkObject === null || sdkObject === void 0 ? void 0 : sdkObject.guid,
-      pageId: sdkObject === null || sdkObject === void 0 ? void 0 : (_sdkObject$attributio5 = sdkObject.attribution) === null || _sdkObject$attributio5 === void 0 ? void 0 : (_sdkObject$attributio6 = _sdkObject$attributio5.page) === null || _sdkObject$attributio6 === void 0 ? void 0 : _sdkObject$attributio6.guid,
-      frameId: sdkObject === null || sdkObject === void 0 ? void 0 : (_sdkObject$attributio7 = sdkObject.attribution) === null || _sdkObject$attributio7 === void 0 ? void 0 : (_sdkObject$attributio8 = _sdkObject$attributio7.frame) === null || _sdkObject$attributio8 === void 0 ? void 0 : _sdkObject$attributio8.guid,
-      wallTime: Date.now(),
+      pageId: sdkObject === null || sdkObject === void 0 ? void 0 : (_sdkObject$attributio3 = sdkObject.attribution) === null || _sdkObject$attributio3 === void 0 ? void 0 : (_sdkObject$attributio4 = _sdkObject$attributio3.page) === null || _sdkObject$attributio4 === void 0 ? void 0 : _sdkObject$attributio4.guid,
+      frameId: sdkObject === null || sdkObject === void 0 ? void 0 : (_sdkObject$attributio5 = sdkObject.attribution) === null || _sdkObject$attributio5 === void 0 ? void 0 : (_sdkObject$attributio6 = _sdkObject$attributio5.frame) === null || _sdkObject$attributio6 === void 0 ? void 0 : _sdkObject$attributio6.guid,
       startTime: (0, _utils.monotonicTime)(),
       endTime: 0,
       type: dispatcher._type,
       method,
       params: params || {},
-      log: [],
-      snapshots: []
+      log: []
     };
     if (sdkObject && params !== null && params !== void 0 && (_params$info = params.info) !== null && _params$info !== void 0 && _params$info.waitId) {
       // Process logs for waitForNavigation/waitForLoadState/etc.
@@ -347,4 +342,3 @@ function formatLogRecording(log) {
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
-let lastEventId = 0;

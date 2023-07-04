@@ -76,7 +76,7 @@ class Android extends _channelOwner.ChannelOwner {
         pipe
       } = await localUtils._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
-      const connection = new _connection.Connection(localUtils);
+      const connection = new _connection.Connection(localUtils, this._instrumentation);
       connection.markAsRemote();
       connection.on('close', closePipe);
       let device;

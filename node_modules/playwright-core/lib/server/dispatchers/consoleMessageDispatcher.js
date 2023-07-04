@@ -23,12 +23,13 @@ var _elementHandlerDispatcher = require("./elementHandlerDispatcher");
  */
 
 class ConsoleMessageDispatcher extends _dispatcher.Dispatcher {
-  constructor(scope, message) {
-    super(scope, message, 'ConsoleMessage', {
+  constructor(page, message) {
+    super(page, message, 'ConsoleMessage', {
       type: message.type(),
       text: message.text(),
-      args: message.args().map(a => _elementHandlerDispatcher.ElementHandleDispatcher.fromJSHandle(scope, a)),
-      location: message.location()
+      args: message.args().map(a => _elementHandlerDispatcher.ElementHandleDispatcher.fromJSHandle(page, a)),
+      location: message.location(),
+      page
     });
     this._type_ConsoleMessage = true;
   }

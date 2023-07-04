@@ -29,7 +29,7 @@ class SelectorsDispatcher extends _dispatcher.Dispatcher {
   async register(params) {
     await this._object.register(params.name, params.source, params.contentScript);
   }
-  async setTestIdAttributeName(params, metadata) {
+  async setTestIdAttributeName(params) {
     this._object.setTestIdAttributeName(params.testIdAttributeName);
   }
 }

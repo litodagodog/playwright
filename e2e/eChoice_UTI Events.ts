@@ -30,10 +30,10 @@ test.afterAll(async () => {
 });
 
 test('Select Resident', async () => {
-  await page.getByRole('button', { name: 'Moore-Phillips FacilityChoice Aged Care 43738 Crystal Dam Suite 587 Simschester, NJ 97144' }).click();
+  await page.getByRole('button', { name: 'Facility Playwright UpdatedMorgan LLC Facility Playwright Updated' }).nth(1).click();
   await page.getByRole('button', { name: 'Continue' }).click();
   await page.waitForTimeout(10000);
-    await page.getByRole('button', { name: 'Residents' }).click();
+    //await page.getByRole('button', { name: 'Residents' }).click();
     await page.getByRole('checkbox', { name: /Playwright Automation .*/ }).click({force:true});
     await page.waitForTimeout(8000);
 });
@@ -51,7 +51,8 @@ test('UTI Events', async () => {
   await page.getByRole('button', { name: 'ADD' }).click();
   await page.getByText('Successfully created UTI event.').isVisible();
   await page.waitForTimeout(8000);
-  await page.getByRole('cell', { name: 'Add UTI Event using playwright automation' }).first().isVisible();
+  await expect(page.getByRole('cell', { name: 'Add UTI Event using playwright automation' })).toHaveText('Add UTI Event using playwright automation');
+  //await page.getByRole('cell', { name: 'Add UTI Event using playwright automation' }).first().isVisible();
   //UPDATE UTI Event
   await page.getByRole('row', { name: 'Add UTI Event using playwright automation' }).first().locator('#fade-button').click();
   await page.getByRole('menuitem', { name: 'Update' }).click();

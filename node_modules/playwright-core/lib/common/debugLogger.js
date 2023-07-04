@@ -34,7 +34,7 @@ const debugLoggerColorMap = {
   // green
   'browser': 0,
   // reset
-  'proxy': 92,
+  'socks': 92,
   // purple
   'error': 160,
   // red,
@@ -42,7 +42,11 @@ const debugLoggerColorMap = {
   // blue
   'channel:response': 202,
   // orange
-  'channel:event': 207 // magenta
+  'channel:event': 207,
+  // magenta
+  'server': 45,
+  // cyan
+  'server:channel': 34 // green
 };
 
 class DebugLogger {

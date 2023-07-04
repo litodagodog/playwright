@@ -7,6 +7,7 @@ exports.installAppIcon = installAppIcon;
 exports.syncLocalStorageWithSettings = syncLocalStorageWithSettings;
 var _fs = _interopRequireDefault(require("fs"));
 var _path = _interopRequireDefault(require("path"));
+var _utils = require("playwright-core/lib/utils");
 var _registry = require("../registry");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 /**
@@ -33,8 +34,9 @@ async function installAppIcon(page) {
   });
 }
 async function syncLocalStorageWithSettings(page, appName) {
+  if ((0, _utils.isUnderTest)()) return;
   const settingsFile = _path.default.join(_registry.registryDirectory, '.settings', `${appName}.json`);
-  await page.exposeBinding('saveSettings', false, (_, settings) => {
+  await page.exposeBinding('_saveSerializedSettings', false, (_, settings) => {
     _fs.default.mkdirSync(_path.default.dirname(settingsFile), {
       recursive: true
     });
@@ -42,14 +44,14 @@ async function syncLocalStorageWithSettings(page, appName) {
   });
   const settings = await _fs.default.promises.readFile(settingsFile, 'utf-8').catch(() => '{}');
   await page.addInitScript(`(${String(settings => {
+    // iframes w/ snapshots, etc.
+    if (location && location.protocol === 'data:') return;
     Object.entries(settings).map(([k, v]) => localStorage[k] = v);
-    let lastValue = JSON.stringify(localStorage);
-    setInterval(() => {
-      const value = JSON.stringify(localStorage);
-      if (value !== lastValue) {
-        lastValue = value;
-        window.saveSettings(value);
-      }
-    }, 2000);
-  })})(${settings})`);
+    window.saveSettings = () => {
+      window._saveSerializedSettings(JSON.stringify({
+        ...localStorage
+      }));
+    };
+  })})(${settings});
+  `);
 }

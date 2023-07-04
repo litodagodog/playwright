@@ -18,14 +18,14 @@ var _timeoutSettings = require("../common/timeoutSettings");
 var _waiter = require("./waiter");
 var _utils = require("../utils");
 var _fileUtils = require("../utils/fileUtils");
-var _errors = require("../common/errors");
 var _cdpSession = require("./cdpSession");
 var _tracing = require("./tracing");
 var _artifact = require("./artifact");
 var _fetch = require("./fetch");
-var _clientInstrumentation = require("./clientInstrumentation");
 var _stackTrace = require("../utils/stackTrace");
 var _harRouter = require("./harRouter");
+var _consoleMessage = require("./consoleMessage");
+var _dialog = require("./dialog");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -54,8 +54,8 @@ class BrowserContext extends _channelOwner.ChannelOwner {
     return context ? BrowserContext.from(context) : null;
   }
   constructor(parent, type, guid, initializer) {
-    var _this$_browser;
-    super(parent, type, guid, initializer, (0, _clientInstrumentation.createInstrumentation)());
+    var _this$_browser, _this$_browser2;
+    super(parent, type, guid, initializer);
     this._pages = new Set();
     this._routes = [];
     this._browser = null;
@@ -71,8 +71,10 @@ class BrowserContext extends _channelOwner.ChannelOwner {
     this._serviceWorkers = new Set();
     this._isChromium = void 0;
     this._harRecorders = new Map();
+    this._closeWasCalled = false;
     if (parent instanceof _browser.Browser) this._browser = parent;
-    this._isChromium = ((_this$_browser = this._browser) === null || _this$_browser === void 0 ? void 0 : _this$_browser._name) === 'chromium';
+    (_this$_browser = this._browser) === null || _this$_browser === void 0 ? void 0 : _this$_browser._contexts.add(this);
+    this._isChromium = ((_this$_browser2 = this._browser) === null || _this$_browser2 === void 0 ? void 0 : _this$_browser2._name) === 'chromium';
     this.tracing = _tracing.Tracing.from(initializer.tracing);
     this.request = _fetch.APIRequestContext.from(initializer.requestContext);
     this._channel.on('bindingCall', ({
@@ -100,6 +102,29 @@ class BrowserContext extends _channelOwner.ChannelOwner {
       this._serviceWorkers.add(serviceWorker);
       this.emit(_events.Events.BrowserContext.ServiceWorker, serviceWorker);
     });
+    this._channel.on('console', ({
+      message
+    }) => {
+      const consoleMessage = _consoleMessage.ConsoleMessage.from(message);
+      this.emit(_events.Events.BrowserContext.Console, consoleMessage);
+      const page = consoleMessage.page();
+      if (page) page.emit(_events.Events.Page.Console, consoleMessage);
+    });
+    this._channel.on('dialog', ({
+      dialog
+    }) => {
+      const dialogObject = _dialog.Dialog.from(dialog);
+      let hasListeners = this.emit(_events.Events.BrowserContext.Dialog, dialogObject);
+      const page = dialogObject.page();
+      if (page) hasListeners = page.emit(_events.Events.Page.Dialog, dialogObject) || hasListeners;
+      if (!hasListeners) {
+        // Although we do similar handling on the server side, we still need this logic
+        // on the client side due to a possible race condition between two async calls:
+        // a) removing "dialog" listener subscription (client->server)
+        // b) actual "dialog" event (server->client)
+        if (dialogObject.type() === 'beforeunload') dialog.accept({}).catch(() => {});else dialog.dismiss().catch(() => {});
+      }
+    });
     this._channel.on('request', ({
       request,
       page
@@ -116,15 +141,15 @@ class BrowserContext extends _channelOwner.ChannelOwner {
       page
     }) => this._onResponse(network.Response.from(response), _page.Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(_events.Events.BrowserContext.Close, f));
-    this._setEventToSubscriptionMapping(new Map([[_events.Events.BrowserContext.Request, 'request'], [_events.Events.BrowserContext.Response, 'response'], [_events.Events.BrowserContext.RequestFinished, 'requestFinished'], [_events.Events.BrowserContext.RequestFailed, 'requestFailed']]));
+    this._setEventToSubscriptionMapping(new Map([[_events.Events.BrowserContext.Console, 'console'], [_events.Events.BrowserContext.Dialog, 'dialog'], [_events.Events.BrowserContext.Request, 'request'], [_events.Events.BrowserContext.Response, 'response'], [_events.Events.BrowserContext.RequestFinished, 'requestFinished'], [_events.Events.BrowserContext.RequestFailed, 'requestFailed']]));
   }
-  _setBrowserType(browserType) {
-    this._browserType = browserType;
-    browserType._contexts.add(this);
+  _setOptions(contextOptions, browserOptions) {
+    this._options = contextOptions;
     if (this._options.recordHar) this._harRecorders.set('', {
       path: this._options.recordHar.path,
       content: this._options.recordHar.content
     });
+    this.tracing._tracesDir = browserOptions.tracesDir;
   }
   _onPage(page) {
     this._pages.add(page);
@@ -155,7 +180,7 @@ class BrowserContext extends _channelOwner.ChannelOwner {
     request._setResponseEndTiming(responseEndTiming);
     this.emit(_events.Events.BrowserContext.RequestFinished, request);
     if (page) page.emit(_events.Events.Page.RequestFinished, request);
-    if (response) response._finishedPromise.resolve();
+    if (response) response._finishedPromise.resolve(null);
   }
   async _onRoute(route) {
     const routeHandlers = this._routes.slice();
@@ -163,7 +188,7 @@ class BrowserContext extends _channelOwner.ChannelOwner {
       if (!routeHandler.matches(route.request().url())) continue;
       if (routeHandler.willExpire()) this._routes.splice(this._routes.indexOf(routeHandler), 1);
       const handled = await routeHandler.handle(route);
-      if (!this._routes.length) this._wrapApiCall(() => this._disableInterception(), true).catch(() => {});
+      if (!this._routes.length) this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
       if (handled) return;
     }
     await route._innerContinue(true);
@@ -266,25 +291,24 @@ class BrowserContext extends _channelOwner.ChannelOwner {
   }
   async route(url, handler, options = {}) {
     this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
-    if (this._routes.length === 1) await this._channel.setNetworkInterceptionEnabled({
-      enabled: true
-    });
+    await this._updateInterceptionPatterns();
   }
   async _recordIntoHAR(har, page, options = {}) {
+    var _options$updateConten, _options$updateMode, _options$updateConten2;
     const {
       harId
     } = await this._channel.harStart({
       page: page === null || page === void 0 ? void 0 : page._channel,
       options: prepareRecordHarOptions({
         path: har,
-        content: 'attach',
-        mode: 'minimal',
+        content: (_options$updateConten = options.updateContent) !== null && _options$updateConten !== void 0 ? _options$updateConten : 'attach',
+        mode: (_options$updateMode = options.updateMode) !== null && _options$updateMode !== void 0 ? _options$updateMode : 'minimal',
         urlFilter: options.url
       })
     });
     this._harRecorders.set(harId, {
       path: har,
-      content: 'attach'
+      content: (_options$updateConten2 = options.updateContent) !== null && _options$updateConten2 !== void 0 ? _options$updateConten2 : 'attach'
     });
   }
   async routeFromHAR(har, options = {}) {
@@ -298,12 +322,13 @@ class BrowserContext extends _channelOwner.ChannelOwner {
     harRouter.addContextRoute(this);
   }
   async unroute(url, handler) {
-    this._routes = this._routes.filter(route => route.url !== url || handler && route.handler !== handler);
-    if (!this._routes.length) await this._disableInterception();
+    this._routes = this._routes.filter(route => !(0, _utils.urlMatchesEqual)(route.url, url) || handler && route.handler !== handler);
+    await this._updateInterceptionPatterns();
   }
-  async _disableInterception() {
-    await this._channel.setNetworkInterceptionEnabled({
-      enabled: false
+  async _updateInterceptionPatterns() {
+    const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
+    await this._channel.setNetworkInterceptionPatterns({
+      patterns
     });
   }
   async waitForEvent(event, optionsOrPredicate = {}) {
@@ -349,36 +374,33 @@ class BrowserContext extends _channelOwner.ChannelOwner {
     this.emit(_events.Events.BrowserContext.Close, this);
   }
   async close() {
-    try {
-      await this._wrapApiCall(async () => {
-        var _this$_browserType2, _this$_browserType2$_;
-        await ((_this$_browserType2 = this._browserType) === null || _this$_browserType2 === void 0 ? void 0 : (_this$_browserType2$_ = _this$_browserType2._onWillCloseContext) === null || _this$_browserType2$_ === void 0 ? void 0 : _this$_browserType2$_.call(_this$_browserType2, this));
-        for (const [harId, harParams] of this._harRecorders) {
-          const har = await this._channel.harExport({
-            harId
+    if (this._closeWasCalled) return;
+    this._closeWasCalled = true;
+    await this._wrapApiCall(async () => {
+      var _this$_browserType2;
+      await ((_this$_browserType2 = this._browserType) === null || _this$_browserType2 === void 0 ? void 0 : _this$_browserType2._willCloseContext(this));
+      for (const [harId, harParams] of this._harRecorders) {
+        const har = await this._channel.harExport({
+          harId
+        });
+        const artifact = _artifact.Artifact.from(har.artifact);
+        // Server side will compress artifact if content is attach or if file is .zip.
+        const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
+        const needCompressed = harParams.path.endsWith('.zip');
+        if (isCompressed && !needCompressed) {
+          await artifact.saveAs(harParams.path + '.tmp');
+          await this._connection.localUtils()._channel.harUnzip({
+            zipFile: harParams.path + '.tmp',
+            harFile: harParams.path
           });
-          const artifact = _artifact.Artifact.from(har.artifact);
-          // Server side will compress artifact if content is attach or if file is .zip.
-          const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
-          const needCompressed = harParams.path.endsWith('.zip');
-          if (isCompressed && !needCompressed) {
-            await artifact.saveAs(harParams.path + '.tmp');
-            await this._connection.localUtils()._channel.harUnzip({
-              zipFile: harParams.path + '.tmp',
-              harFile: harParams.path
-            });
-          } else {
-            await artifact.saveAs(harParams.path);
-          }
-          await artifact.delete();
+        } else {
+          await artifact.saveAs(harParams.path);
         }
-      }, true);
-      await this._channel.close();
-      await this._closedPromise;
-    } catch (e) {
-      if ((0, _errors.isSafeCloseError)(e)) return;
-      throw e;
-    }
+        await artifact.delete();
+      }
+    }, true);
+    await this._channel.close();
+    await this._closedPromise;
   }
   async _enableRecorder(params) {
     await this._channel.recorderSupplementEnable(params);

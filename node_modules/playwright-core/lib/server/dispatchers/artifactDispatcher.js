@@ -71,7 +71,9 @@ class ArtifactDispatcher extends _dispatcher.Dispatcher {
           return;
         }
         try {
-          const readable = _fs.default.createReadStream(localPath);
+          const readable = _fs.default.createReadStream(localPath, {
+            highWaterMark: 1024 * 1024
+          });
           const stream = new _streamDispatcher.StreamDispatcher(this, readable);
           // Resolve with a stream, so that client starts saving the data.
           resolve({
@@ -92,7 +94,9 @@ class ArtifactDispatcher extends _dispatcher.Dispatcher {
   async stream() {
     const fileName = await this._object.localPathAfterFinished();
     if (!fileName) return {};
-    const readable = _fs.default.createReadStream(fileName);
+    const readable = _fs.default.createReadStream(fileName, {
+      highWaterMark: 1024 * 1024
+    });
     return {
       stream: new _streamDispatcher.StreamDispatcher(this, readable)
     };

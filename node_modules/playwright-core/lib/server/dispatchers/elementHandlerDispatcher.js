@@ -213,12 +213,12 @@ class ElementHandleDispatcher extends _jsHandleDispatcher.JSHandleDispatcher {
   }
   async evalOnSelector(params, metadata) {
     return {
-      value: (0, _jsHandleDispatcher.serializeResult)(await this._elementHandle.evalOnSelectorAndWaitForSignals(params.selector, !!params.strict, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
+      value: (0, _jsHandleDispatcher.serializeResult)(await this._elementHandle.evalOnSelector(params.selector, !!params.strict, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
     };
   }
   async evalOnSelectorAll(params, metadata) {
     return {
-      value: (0, _jsHandleDispatcher.serializeResult)(await this._elementHandle.evalOnSelectorAllAndWaitForSignals(params.selector, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
+      value: (0, _jsHandleDispatcher.serializeResult)(await this._elementHandle.evalOnSelectorAll(params.selector, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
     };
   }
   async waitForElementState(params, metadata) {

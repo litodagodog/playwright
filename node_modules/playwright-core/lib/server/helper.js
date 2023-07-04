@@ -23,6 +23,7 @@ var _eventsHelper = require("../utils/eventsHelper");
  * limitations under the License.
  */
 
+const MAX_LOG_LENGTH = process.env.MAX_LOG_LENGTH ? +process.env.MAX_LOG_LENGTH : Infinity;
 class Helper {
   static completeUserURL(urlString) {
     if (urlString.startsWith('localhost') || urlString.startsWith('127.0.0.1')) urlString = 'http://' + urlString;
@@ -87,7 +88,11 @@ class Helper {
   static debugProtocolLogger(protocolLogger) {
     return (direction, message) => {
       if (protocolLogger) protocolLogger(direction, message);
-      if (_debugLogger.debugLogger.isEnabled('protocol')) _debugLogger.debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message));
+      if (_debugLogger.debugLogger.isEnabled('protocol')) {
+        let text = JSON.stringify(message);
+        if (text.length > MAX_LOG_LENGTH) text = text.substring(0, MAX_LOG_LENGTH / 2) + ' <<<<<( LOG TRUNCATED )>>>>> ' + text.substring(text.length - MAX_LOG_LENGTH / 2);
+        _debugLogger.debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + text);
+      }
     };
   }
   static formatBrowserLogs(logs) {

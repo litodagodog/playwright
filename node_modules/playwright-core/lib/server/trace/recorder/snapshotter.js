@@ -57,6 +57,10 @@ class Snapshotter {
   async stop() {
     this._started = false;
   }
+  resetForReuse() {
+    // Next time we start recording, we will call addInitScript again.
+    this._initialized = false;
+  }
   async _initialize() {
     for (const page of this._context.pages()) this._onPage(page);
     this._eventListeners = [_eventsHelper.eventsHelper.addEventListener(this._context, _browserContext.BrowserContext.Events.Page, this._onPage.bind(this))];
@@ -74,14 +78,20 @@ class Snapshotter {
   dispose() {
     _eventsHelper.eventsHelper.removeEventListeners(this._eventListeners);
   }
-  async captureSnapshot(page, snapshotName, element) {
+  async captureSnapshot(page, callId, snapshotName, element) {
     // Prepare expression synchronously.
     const expression = `window["${this._snapshotStreamer}"].captureSnapshot(${JSON.stringify(snapshotName)})`;
 
     // In a best-effort manner, without waiting for it, mark target element.
-    element === null || element === void 0 ? void 0 : element.callFunctionNoReply((element, snapshotName) => {
-      element.setAttribute('__playwright_target__', snapshotName);
-    }, snapshotName);
+    element === null || element === void 0 ? void 0 : element.callFunctionNoReply((element, callId) => {
+      const customEvent = new CustomEvent('__playwright_target__', {
+        bubbles: true,
+        cancelable: true,
+        detail: callId,
+        composed: false
+      });
+      element.dispatchEvent(customEvent);
+    }, callId);
 
     // In each frame, in a non-stalling manner, capture the snapshots.
     const snapshots = page.frames().map(async frame => {
@@ -89,6 +99,7 @@ class Snapshotter {
       // Something went wrong -> bail out, our snapshots are best-efforty.
       if (!data || !this._started) return;
       const snapshot = {
+        callId,
         snapshotName,
         pageId: page.guid,
         frameId: frame.guid,

@@ -26,11 +26,10 @@ var _cdpSession = require("./cdpSession");
  */
 
 class Browser extends _channelOwner.ChannelOwner {
+  // Used from @playwright/test fixtures.
+
   static from(browser) {
     return browser._object;
-  }
-  static fromNullable(browser) {
-    return browser ? Browser.from(browser) : null;
   }
   constructor(parent, type, guid, initializer) {
     super(parent, type, guid, initializer);
@@ -39,14 +38,12 @@ class Browser extends _channelOwner.ChannelOwner {
     this._closedPromise = void 0;
     this._shouldCloseConnectionOnClose = false;
     this._browserType = void 0;
+    this._options = {};
     this._name = void 0;
+    this._connectHeaders = void 0;
     this._name = initializer.name;
     this._channel.on('close', () => this._didClose());
     this._closedPromise = new Promise(f => this.once(_events.Events.Browser.Disconnected, f));
-  }
-  _setBrowserType(browserType) {
-    this._browserType = browserType;
-    for (const context of this._contexts) context._setBrowserType(browserType);
   }
   browserType() {
     return this._browserType;
@@ -55,16 +52,16 @@ class Browser extends _channelOwner.ChannelOwner {
     return await this._innerNewContext(options, false);
   }
   async _newContextForReuse(options = {}) {
-    for (const context of this._contexts) {
-      var _this$_browserType$_o, _this$_browserType;
-      await ((_this$_browserType$_o = (_this$_browserType = this._browserType)._onWillCloseContext) === null || _this$_browserType$_o === void 0 ? void 0 : _this$_browserType$_o.call(_this$_browserType, context));
-      context._onClose();
-    }
-    this._contexts.clear();
-    return await this._innerNewContext(options, true);
+    return await this._wrapApiCall(async () => {
+      for (const context of this._contexts) {
+        await this._browserType._willCloseContext(context);
+        for (const page of context.pages()) page._onClose();
+        context._onClose();
+      }
+      return await this._innerNewContext(options, true);
+    }, true);
   }
   async _innerNewContext(options = {}, forReuse) {
-    var _this$_browserType$_o2, _this$_browserType2;
     options = {
       ...this._browserType._defaultContextOptions,
       ...options
@@ -72,11 +69,7 @@ class Browser extends _channelOwner.ChannelOwner {
     const contextOptions = await (0, _browserContext.prepareBrowserContextParams)(options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
     const context = _browserContext.BrowserContext.from(response.context);
-    context._options = contextOptions;
-    this._contexts.add(context);
-    context._logger = options.logger || this._logger;
-    context._setBrowserType(this._browserType);
-    await ((_this$_browserType$_o2 = (_this$_browserType2 = this._browserType)._onDidCreateContext) === null || _this$_browserType$_o2 === void 0 ? void 0 : _this$_browserType$_o2.call(_this$_browserType2, context));
+    await this._browserType._didCreateContext(context, contextOptions, this._options, options.logger || this._logger);
     return context;
   }
   contexts() {
@@ -86,11 +79,13 @@ class Browser extends _channelOwner.ChannelOwner {
     return this._initializer.version;
   }
   async newPage(options = {}) {
-    const context = await this.newContext(options);
-    const page = await context.newPage();
-    page._ownedContext = context;
-    context._ownerPage = page;
-    return page;
+    return await this._wrapApiCall(async () => {
+      const context = await this.newContext(options);
+      const page = await context.newPage();
+      page._ownedContext = context;
+      context._ownerPage = page;
+      return page;
+    });
   }
   isConnected() {
     return this._isConnected;

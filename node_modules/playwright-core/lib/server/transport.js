@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.WebSocketTransport = void 0;
 var _utilsBundle = require("../utilsBundle");
 var _utils = require("../utils");
+var _happyEyeballs = require("../utils/happy-eyeballs");
 /**
  * Copyright 2018 Google Inc. All rights reserved.
  * Modifications copyright (c) Microsoft Corporation.
@@ -24,26 +25,30 @@ var _utils = require("../utils");
  */
 
 class WebSocketTransport {
-  static async connect(progress, url, headers, followRedirects) {
-    progress === null || progress === void 0 ? void 0 : progress.log(`<ws connecting> ${url}`);
-    const transport = new WebSocketTransport(progress, url, headers, followRedirects);
+  static async connect(progress, url, headers, followRedirects, debugLogHeader) {
+    const logUrl = stripQueryParams(url);
+    progress === null || progress === void 0 ? void 0 : progress.log(`<ws connecting> ${logUrl}`);
+    const transport = new WebSocketTransport(progress, url, logUrl, headers, followRedirects, debugLogHeader);
     let success = false;
     progress === null || progress === void 0 ? void 0 : progress.cleanupWhenAborted(async () => {
       if (!success) await transport.closeAndWait().catch(e => null);
     });
     await new Promise((fulfill, reject) => {
       transport._ws.on('open', async () => {
-        progress === null || progress === void 0 ? void 0 : progress.log(`<ws connected> ${url}`);
+        progress === null || progress === void 0 ? void 0 : progress.log(`<ws connected> ${logUrl}`);
         fulfill(transport);
       });
       transport._ws.on('error', event => {
-        progress === null || progress === void 0 ? void 0 : progress.log(`<ws connect error> ${url} ${event.message}`);
+        progress === null || progress === void 0 ? void 0 : progress.log(`<ws connect error> ${logUrl} ${event.message}`);
         reject(new Error('WebSocket error: ' + event.message));
         transport._ws.close();
       });
       transport._ws.on('unexpected-response', (request, response) => {
+        for (let i = 0; i < response.rawHeaders.length; i += 2) {
+          if (debugLogHeader && response.rawHeaders[i] === debugLogHeader) progress === null || progress === void 0 ? void 0 : progress.log(response.rawHeaders[i + 1]);
+        }
         const chunks = [];
-        const errorPrefix = `${url} ${response.statusCode} ${response.statusMessage}`;
+        const errorPrefix = `${logUrl} ${response.statusCode} ${response.statusMessage}`;
         response.on('data', chunk => chunks.push(chunk));
         response.on('close', () => {
           const error = chunks.length ? `${errorPrefix}\n${Buffer.concat(chunks)}` : errorPrefix;
@@ -56,14 +61,17 @@ class WebSocketTransport {
     success = true;
     return transport;
   }
-  constructor(progress, url, headers, followRedirects) {
+  constructor(progress, url, logUrl, headers, followRedirects, debugLogHeader) {
     var _progress$timeUntilDe;
     this._ws = void 0;
     this._progress = void 0;
+    this._logUrl = void 0;
     this.onmessage = void 0;
     this.onclose = void 0;
     this.wsEndpoint = void 0;
+    this.headers = [];
     this.wsEndpoint = url;
+    this._logUrl = logUrl;
     this._ws = new _utilsBundle.ws(url, [], {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024,
@@ -71,7 +79,17 @@ class WebSocketTransport {
       // Prevent internal http client error when passing negative timeout.
       handshakeTimeout: Math.max((_progress$timeUntilDe = progress === null || progress === void 0 ? void 0 : progress.timeUntilDeadline()) !== null && _progress$timeUntilDe !== void 0 ? _progress$timeUntilDe : 30_000, 1),
       headers,
-      followRedirects
+      followRedirects,
+      agent: /^(https|wss):\/\//.test(url) ? _happyEyeballs.httpsHappyEyeballsAgent : _happyEyeballs.httpHappyEyeballsAgent
+    });
+    this._ws.on('upgrade', response => {
+      for (let i = 0; i < response.rawHeaders.length; i += 2) {
+        this.headers.push({
+          name: response.rawHeaders[i],
+          value: response.rawHeaders[i + 1]
+        });
+        if (debugLogHeader && response.rawHeaders[i] === debugLogHeader) progress === null || progress === void 0 ? void 0 : progress.log(response.rawHeaders[i + 1]);
+      }
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.
@@ -90,13 +108,13 @@ class WebSocketTransport {
     });
     this._ws.addEventListener('close', event => {
       var _this$_progress;
-      (_this$_progress = this._progress) === null || _this$_progress === void 0 ? void 0 : _this$_progress.log(`<ws disconnected> ${url} code=${event.code} reason=${event.reason}`);
+      (_this$_progress = this._progress) === null || _this$_progress === void 0 ? void 0 : _this$_progress.log(`<ws disconnected> ${logUrl} code=${event.code} reason=${event.reason}`);
       if (this.onclose) this.onclose.call(null);
     });
     // Prevent Error: read ECONNRESET.
     this._ws.addEventListener('error', error => {
       var _this$_progress2;
-      return (_this$_progress2 = this._progress) === null || _this$_progress2 === void 0 ? void 0 : _this$_progress2.log(`<ws error> ${error.type} ${error.message}`);
+      return (_this$_progress2 = this._progress) === null || _this$_progress2 === void 0 ? void 0 : _this$_progress2.log(`<ws error> ${logUrl} ${error.type} ${error.message}`);
     });
   }
   send(message) {
@@ -104,7 +122,7 @@ class WebSocketTransport {
   }
   close() {
     var _this$_progress3;
-    (_this$_progress3 = this._progress) === null || _this$_progress3 === void 0 ? void 0 : _this$_progress3.log(`<ws disconnecting> ${this._ws.url}`);
+    (_this$_progress3 = this._progress) === null || _this$_progress3 === void 0 ? void 0 : _this$_progress3.log(`<ws disconnecting> ${this._logUrl}`);
     this._ws.close();
   }
   async closeAndWait() {
@@ -115,3 +133,13 @@ class WebSocketTransport {
   }
 }
 exports.WebSocketTransport = WebSocketTransport;
+function stripQueryParams(url) {
+  try {
+    const u = new URL(url);
+    u.search = '';
+    u.hash = '';
+    return u.toString();
+  } catch {
+    return url;
+  }
+}

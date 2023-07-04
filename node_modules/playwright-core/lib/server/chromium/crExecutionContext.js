@@ -110,6 +110,13 @@ class CRExecutionContext {
   async releaseHandle(objectId) {
     await (0, _crProtocolHelper.releaseObject)(this._client, objectId);
   }
+  async objectCount(objectId) {
+    const result = await this._client.send('Runtime.queryObjects', {
+      prototypeObjectId: objectId
+    });
+    const match = result.objects.description.match(/Array\((\d+)\)/);
+    return +match[1];
+  }
 }
 exports.CRExecutionContext = CRExecutionContext;
 function rewriteError(error) {
@@ -144,13 +151,6 @@ function renderPreview(object) {
     } of object.preview.properties) tokens.push(`${name}: ${value}`);
     return `{${tokens.join(', ')}}`;
   }
-  if (object.subtype === 'array' && object.preview) {
-    const result = [];
-    for (const {
-      name,
-      value
-    } of object.preview.properties) result[+name] = value;
-    return '[' + String(result) + ']';
-  }
+  if (object.subtype === 'array' && object.preview) return js.sparseArrayToString(object.preview.properties);
   return object.description;
 }

@@ -82,15 +82,17 @@ class FrameDispatcher extends _dispatcher.Dispatcher {
   }
   async evaluateExpression(params, metadata) {
     return {
-      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evaluateExpressionAndWaitForSignals(params.expression, {
+      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evaluateExpression(params.expression, {
         isFunction: params.isFunction,
         exposeUtilityScript: params.exposeUtilityScript
-      }, (0, _jsHandleDispatcher.parseArgument)(params.arg), 'main'))
+      }, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
     };
   }
   async evaluateExpressionHandle(params, metadata) {
     return {
-      handle: _elementHandlerDispatcher.ElementHandleDispatcher.fromJSHandle(this.parentScope(), await this._frame.evaluateExpressionHandleAndWaitForSignals(params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg), 'main'))
+      handle: _elementHandlerDispatcher.ElementHandleDispatcher.fromJSHandle(this.parentScope(), await this._frame.evaluateExpressionHandle(params.expression, {
+        isFunction: params.isFunction
+      }, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
     };
   }
   async waitForSelector(params, metadata) {
@@ -103,12 +105,12 @@ class FrameDispatcher extends _dispatcher.Dispatcher {
   }
   async evalOnSelector(params, metadata) {
     return {
-      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evalOnSelectorAndWaitForSignals(params.selector, !!params.strict, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
+      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evalOnSelector(params.selector, !!params.strict, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
     };
   }
   async evalOnSelectorAll(params, metadata) {
     return {
-      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evalOnSelectorAllAndWaitForSignals(params.selector, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
+      value: (0, _jsHandleDispatcher.serializeResult)(await this._frame.evalOnSelectorAll(params.selector, params.expression, params.isFunction, (0, _jsHandleDispatcher.parseArgument)(params.arg)))
     };
   }
   async querySelector(params, metadata) {

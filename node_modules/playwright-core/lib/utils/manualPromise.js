@@ -3,10 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.ManualPromise = void 0;
+exports.ScopedRace = exports.ManualPromise = void 0;
+var _stackTrace = require("./stackTrace");
 let _Symbol$species, _Symbol$toStringTag;
-_Symbol$species = Symbol.species;
-_Symbol$toStringTag = Symbol.toStringTag;
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -22,7 +21,8 @@ _Symbol$toStringTag = Symbol.toStringTag;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+_Symbol$species = Symbol.species;
+_Symbol$toStringTag = Symbol.toStringTag;
 class ManualPromise extends Promise {
   constructor() {
     let resolve;
@@ -57,3 +57,34 @@ class ManualPromise extends Promise {
   }
 }
 exports.ManualPromise = ManualPromise;
+class ScopedRace {
+  constructor() {
+    this._terminateError = void 0;
+    this._terminatePromises = new Map();
+  }
+  scopeClosed(error) {
+    this._terminateError = error;
+    for (const [p, e] of this._terminatePromises) {
+      (0, _stackTrace.rewriteErrorMessage)(e, error.message);
+      p.resolve(e);
+    }
+  }
+  async race(promise) {
+    return this._race([promise], false);
+  }
+  async safeRace(promise, defaultValue) {
+    return this._race([promise], true, defaultValue);
+  }
+  async _race(promises, safe, defaultValue) {
+    const terminatePromise = new ManualPromise();
+    if (this._terminateError) terminatePromise.resolve(this._terminateError);
+    const error = new Error('');
+    this._terminatePromises.set(terminatePromise, error);
+    try {
+      return await Promise.race([terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)), ...promises]);
+    } finally {
+      this._terminatePromises.delete(terminatePromise);
+    }
+  }
+}
+exports.ScopedRace = ScopedRace;

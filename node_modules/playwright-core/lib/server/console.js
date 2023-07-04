@@ -22,12 +22,14 @@ var _instrumentation = require("./instrumentation");
  */
 
 class ConsoleMessage extends _instrumentation.SdkObject {
-  constructor(parent, type, text, args, location) {
-    super(parent, 'console-message');
+  constructor(page, type, text, args, location) {
+    super(page, 'console-message');
     this._type = void 0;
     this._text = void 0;
     this._args = void 0;
     this._location = void 0;
+    this._page = void 0;
+    this._page = page;
     this._type = type;
     this._text = text;
     this._args = args;
@@ -36,6 +38,9 @@ class ConsoleMessage extends _instrumentation.SdkObject {
       lineNumber: 0,
       columnNumber: 0
     };
+  }
+  page() {
+    return this._page;
   }
   type() {
     return this._type;

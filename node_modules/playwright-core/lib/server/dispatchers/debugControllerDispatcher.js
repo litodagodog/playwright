@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.DebugControllerDispatcher = void 0;
+var _utils = require("playwright-core/lib/utils");
 var _debugController = require("../debugController");
 var _dispatcher = require("./dispatcher");
 /**
@@ -26,11 +27,11 @@ class DebugControllerDispatcher extends _dispatcher.Dispatcher {
   constructor(connection, debugController) {
     super(connection, debugController, 'DebugController', {});
     this._type_DebugController = void 0;
+    this._listeners = void 0;
     this._type_DebugController = true;
-    this._object.on(_debugController.DebugController.Events.StateChanged, params => {
+    this._listeners = [_utils.eventsHelper.addEventListener(this._object, _debugController.DebugController.Events.StateChanged, params => {
       this._dispatchEvent('stateChanged', params);
-    });
-    this._object.on(_debugController.DebugController.Events.InspectRequested, ({
+    }), _utils.eventsHelper.addEventListener(this._object, _debugController.DebugController.Events.InspectRequested, ({
       selector,
       locator
     }) => {
@@ -38,8 +39,7 @@ class DebugControllerDispatcher extends _dispatcher.Dispatcher {
         selector,
         locator
       });
-    });
-    this._object.on(_debugController.DebugController.Events.SourceChanged, ({
+    }), _utils.eventsHelper.addEventListener(this._object, _debugController.DebugController.Events.SourceChanged, ({
       text,
       header,
       footer,
@@ -51,14 +51,13 @@ class DebugControllerDispatcher extends _dispatcher.Dispatcher {
         footer,
         actions
       });
-    });
-    this._object.on(_debugController.DebugController.Events.Paused, ({
+    }), _utils.eventsHelper.addEventListener(this._object, _debugController.DebugController.Events.Paused, ({
       paused
     }) => {
       this._dispatchEvent('paused', {
         paused
       });
-    });
+    })];
   }
   async initialize(params) {
     this._object.initialize(params.codegenId, params.sdkLanguage);
@@ -90,8 +89,8 @@ class DebugControllerDispatcher extends _dispatcher.Dispatcher {
   async closeAllBrowsers() {
     await this._object.closeAllBrowsers();
   }
-  _dispose() {
-    super._dispose();
+  _onDispose() {
+    _utils.eventsHelper.removeEventListeners(this._listeners);
     this._object.dispose();
   }
 }

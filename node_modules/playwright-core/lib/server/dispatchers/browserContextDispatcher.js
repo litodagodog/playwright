@@ -17,6 +17,8 @@ var fs = _interopRequireWildcard(require("fs"));
 var path = _interopRequireWildcard(require("path"));
 var _utils = require("../../utils");
 var _writableStreamDispatcher = require("./writableStreamDispatcher");
+var _consoleMessageDispatcher = require("./consoleMessageDispatcher");
+var _dialogDispatcher = require("./dialogDispatcher");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function (nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 /**
@@ -78,6 +80,16 @@ class BrowserContextDispatcher extends _dispatcher.Dispatcher {
     this.addObjectListener(_browserContext.BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
+    });
+    this.addObjectListener(_browserContext.BrowserContext.Events.Console, message => {
+      if (this._shouldDispatchEvent(message.page(), 'console')) this._dispatchEvent('console', {
+        message: new _consoleMessageDispatcher.ConsoleMessageDispatcher(_pageDispatcher.PageDispatcher.from(this, message.page()), message)
+      });
+    });
+    this.addObjectListener(_browserContext.BrowserContext.Events.Dialog, dialog => {
+      if (this._shouldDispatchEvent(dialog.page(), 'dialog')) this._dispatchEvent('dialog', {
+        dialog: new _dialogDispatcher.DialogDispatcher(this, dialog)
+      });else dialog.close().catch(() => {});
     });
     if (context._browser.options.name === 'chromium') {
       for (const page of context.backgroundPages()) this._dispatchEvent('backgroundPage', {
@@ -145,13 +157,15 @@ class BrowserContextDispatcher extends _dispatcher.Dispatcher {
   }
   _shouldDispatchNetworkEvent(request, event) {
     var _request$frame4, _request$frame4$_page;
+    return this._shouldDispatchEvent((_request$frame4 = request.frame()) === null || _request$frame4 === void 0 ? void 0 : (_request$frame4$_page = _request$frame4._page) === null || _request$frame4$_page === void 0 ? void 0 : _request$frame4$_page.initializedOrUndefined(), event);
+  }
+  _shouldDispatchEvent(page, event) {
     if (this._subscriptions.has(event)) return true;
-    const page = (_request$frame4 = request.frame()) === null || _request$frame4 === void 0 ? void 0 : (_request$frame4$_page = _request$frame4._page) === null || _request$frame4$_page === void 0 ? void 0 : _request$frame4$_page.initializedOrUndefined();
     const pageDispatcher = page ? (0, _dispatcher.existingDispatcher)(page) : undefined;
     if (pageDispatcher !== null && pageDispatcher !== void 0 && pageDispatcher._subscriptions.has(event)) return true;
     return false;
   }
-  async createTempFile(params, metadata) {
+  async createTempFile(params) {
     const dir = this._context._browser.options.artifactsDir;
     const tmpDir = path.join(dir, 'upload-' + (0, _utils.createGuid)());
     await fs.promises.mkdir(tmpDir);
@@ -169,6 +183,9 @@ class BrowserContextDispatcher extends _dispatcher.Dispatcher {
   }
   async exposeBinding(params) {
     await this._context.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+      // When reusing the context, we might have some bindings called late enough,
+      // after context and page dispatchers have been disposed.
+      if (this._disposed) return;
       const pageDispatcher = _pageDispatcher.PageDispatcher.from(this, source.page);
       const binding = new _pageDispatcher.BindingCallDispatcher(pageDispatcher, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', {
@@ -214,15 +231,19 @@ class BrowserContextDispatcher extends _dispatcher.Dispatcher {
   async addInitScript(params) {
     await this._context.addInitScript(params.source);
   }
-  async setNetworkInterceptionEnabled(params) {
-    if (!params.enabled) {
+  async setNetworkInterceptionPatterns(params) {
+    if (!params.patterns.length) {
       await this._context.setRequestInterceptor(undefined);
       return;
     }
+    const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags) : pattern.glob);
     await this._context.setRequestInterceptor((route, request) => {
+      const matchesSome = urlMatchers.some(urlMatch => (0, _utils.urlMatches)(this._context._options.baseURL, request.url(), urlMatch));
+      if (!matchesSome) return false;
       this._dispatchEvent('route', {
         route: _networkDispatchers.RouteDispatcher.from(_networkDispatchers.RequestDispatcher.from(this, request), route)
       });
+      return true;
     });
   }
   async storageState(params, metadata) {
@@ -258,11 +279,10 @@ class BrowserContextDispatcher extends _dispatcher.Dispatcher {
       artifact: _artifactDispatcher.ArtifactDispatcher.from(this, artifact)
     };
   }
-  async updateSubscription(params, metadata) {
+  async updateSubscription(params) {
     if (params.enabled) this._subscriptions.add(params.event);else this._subscriptions.delete(params.event);
   }
-  _dispose() {
-    super._dispose();
+  _onDispose() {
     // Avoid protocol calls for the closed context.
     if (!this._context.isClosingOrClosed()) this._context.setRequestInterceptor(undefined).catch(() => {});
   }

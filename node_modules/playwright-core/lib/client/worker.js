@@ -7,6 +7,8 @@ exports.Worker = void 0;
 var _events = require("./events");
 var _channelOwner = require("./channelOwner");
 var _jsHandle = require("./jsHandle");
+var _utils = require("../utils");
+var _errors = require("../common/errors");
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -34,13 +36,13 @@ class Worker extends _channelOwner.ChannelOwner {
     super(parent, type, guid, initializer);
     this._page = void 0;
     this._context = void 0;
-    this._closedPromise = void 0;
+    this._closedRace = new _utils.ScopedRace();
     this._channel.on('close', () => {
       if (this._page) this._page._workers.delete(this);
       if (this._context) this._context._serviceWorkers.delete(this);
       this.emit(_events.Events.Worker.Close, this);
     });
-    this._closedPromise = new Promise(f => this.once(_events.Events.Worker.Close, f));
+    this.once(_events.Events.Worker.Close, () => this._closedRace.scopeClosed(new Error(_errors.kBrowserOrContextClosedError)));
   }
   url() {
     return this._initializer.url;

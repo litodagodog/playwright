@@ -47,6 +47,7 @@ function createInstrumentation() {
   const listeners = new Map();
   return new Proxy({}, {
     get: (obj, prop) => {
+      if (typeof prop !== 'string') return obj[prop];
       if (prop === 'addListener') return (listener, context) => listeners.set(listener, context);
       if (prop === 'removeListener') return listener => listeners.delete(listener);
       if (!prop.startsWith('on')) return obj[prop];
@@ -62,14 +63,13 @@ function createInstrumentation() {
 function serverSideCallMetadata() {
   return {
     id: '',
-    wallTime: 0,
     startTime: 0,
     endTime: 0,
+    wallTime: Date.now(),
     type: 'Internal',
     method: '',
     params: {},
     log: [],
-    snapshots: [],
     isServerSide: true
   };
 }
