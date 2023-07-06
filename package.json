@@ -2,6 +2,7 @@
   "name": "playwright",
   "version": "1.0.0",
   "description": "",
+  "target": "module",
   "main": "index.js",
   "scripts": {},
   "repository": {
@@ -17,6 +18,7 @@
   "homepage": "https://github.com/litodagodog/playwright#readme",
   "devDependencies": {
     "@playwright/test": "^1.35.1",
+    "@types/node": "^20.4.0",
     "dotenv": "^16.0.3"
   }
 }
