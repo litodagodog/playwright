@@ -29,9 +29,17 @@ test.afterAll(async () => {
   await page.close();
 });
 
+test('Select Facility', async () => {
+  await page.getByRole('button', { name: 'Facility Playwright UpdatedMorgan LLC Facility Playwright Updated' }).first().click();
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.waitForTimeout(8000);
+});
+
 test('ToDos', async () => {
   //Create ToDos
-  await page.getByRole('button', { name: 'Todos' }).click();
+  //await page.pause();
+  await page.getByRole('listitem').filter({ hasText: 'Todos' }).getByRole('button').click();
+  //await page.getByRole('button', { name: 'Todos' }).click();
   await page.getByRole('button', { name: 'Create New Todo' }).click();
   await page.getByLabel('Title *').click();
   await page.getByLabel('Title *').fill('ToDo Automation');
