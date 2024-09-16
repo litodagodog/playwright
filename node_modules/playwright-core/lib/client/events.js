@@ -21,7 +21,7 @@ exports.Events = void 0;
  * limitations under the License.
  */
 
-const Events = {
+const Events = exports.Events = {
   AndroidDevice: {
     WebView: 'webview',
     Close: 'close'
@@ -41,6 +41,9 @@ const Events = {
     Close: 'close',
     Dialog: 'dialog',
     Page: 'page',
+    // Can't use just 'error' due to node.js special treatment of error events.
+    // @see https://nodejs.org/api/events.html#events_error_events
+    WebError: 'weberror',
     BackgroundPage: 'backgroundpage',
     ServiceWorker: 'serviceworker',
     Request: 'request',
@@ -85,7 +88,7 @@ const Events = {
   },
   ElectronApplication: {
     Close: 'close',
+    Console: 'console',
     Window: 'window'
   }
 };
-exports.Events = Events;

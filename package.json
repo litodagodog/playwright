@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/litodagodog/playwright#readme",
   "devDependencies": {
-    "@playwright/test": "^1.35.1",
+    "@playwright/test": "^1.47.1",
     "@types/node": "^20.4.0",
     "dotenv": "^16.0.3"
   }

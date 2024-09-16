@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.DebugControllerDispatcher = void 0;
-var _utils = require("playwright-core/lib/utils");
+var _utils = require("../../utils");
 var _debugController = require("../debugController");
 var _dispatcher = require("./dispatcher");
 /**
@@ -56,6 +56,12 @@ class DebugControllerDispatcher extends _dispatcher.Dispatcher {
     }) => {
       this._dispatchEvent('paused', {
         paused
+      });
+    }), _utils.eventsHelper.addEventListener(this._object, _debugController.DebugController.Events.SetModeRequested, ({
+      mode
+    }) => {
+      this._dispatchEvent('setModeRequested', {
+        mode
       });
     })];
   }

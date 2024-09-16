@@ -65,18 +65,19 @@ class BrowserServerLauncherImpl {
       preLaunchedBrowser: browser,
       preLaunchedSocksProxy: socksProxy
     });
-    const wsEndpoint = await server.listen(options.port);
+    const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface
     const browserServer = new _utilsBundle.ws.EventEmitter();
     browserServer.process = () => browser.options.browserProcess.process;
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => browser.options.browserProcess.close();
+    browserServer[Symbol.asyncDispose] = browserServer.close;
     browserServer.kill = () => browser.options.browserProcess.kill();
     browserServer._disconnectForTest = () => server.close();
     browserServer._userDataDirForTest = browser._userDataDirForTest;
     browser.options.browserProcess.onclose = (exitCode, signal) => {
-      socksProxy === null || socksProxy === void 0 ? void 0 : socksProxy.close().catch(() => {});
+      socksProxy === null || socksProxy === void 0 || socksProxy.close().catch(() => {});
       server.close();
       browserServer.emit('close', exitCode, signal);
     };

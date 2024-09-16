@@ -37,20 +37,23 @@ class InMemorySnapshotter {
       content: 'attach',
       includeTraceInfo: true,
       recordRequestOverrides: false,
-      waitForContentOnStop: false,
-      skipScripts: true
+      waitForContentOnStop: false
     });
     this._storage = new _snapshotStorage.SnapshotStorage();
   }
   async initialize() {
     await this._snapshotter.start();
-    this._harTracer.start();
+    this._harTracer.start({
+      omitScripts: true
+    });
   }
   async reset() {
     await this._snapshotter.reset();
     await this._harTracer.flush();
     this._harTracer.stop();
-    this._harTracer.start();
+    this._harTracer.start({
+      omitScripts: true
+    });
   }
   async dispose() {
     this._snapshotter.dispose();
@@ -78,7 +81,7 @@ class InMemorySnapshotter {
     var _this$_snapshotReadyP;
     ++this._snapshotCount;
     const renderer = this._storage.addFrameSnapshot(snapshot);
-    (_this$_snapshotReadyP = this._snapshotReadyPromises.get(snapshot.snapshotName || '')) === null || _this$_snapshotReadyP === void 0 ? void 0 : _this$_snapshotReadyP.resolve(renderer);
+    (_this$_snapshotReadyP = this._snapshotReadyPromises.get(snapshot.snapshotName || '')) === null || _this$_snapshotReadyP === void 0 || _this$_snapshotReadyP.resolve(renderer);
   }
   async resourceContentForTest(sha1) {
     return this._blobs.get(sha1);

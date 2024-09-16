@@ -8,9 +8,9 @@ var _browser = require("../browser");
 var _browserContextDispatcher = require("./browserContextDispatcher");
 var _cdpSessionDispatcher = require("./cdpSessionDispatcher");
 var _dispatcher = require("./dispatcher");
-var _instrumentation = require("../instrumentation");
 var _browserContext = require("../browserContext");
 var _selectors = require("../selectors");
+var _artifactDispatcher = require("./artifactDispatcher");
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -49,10 +49,15 @@ class BrowserDispatcher extends _dispatcher.Dispatcher {
   async newContextForReuse(params, metadata) {
     return await newContextForReuse(this._object, this, params, null, metadata);
   }
-  async close() {
-    await this._object.close();
+  async stopPendingOperations(params, metadata) {
+    await this._object.stopPendingOperations(params.reason);
   }
-  async killForTests() {
+  async close(params, metadata) {
+    metadata.potentiallyClosesScope = true;
+    await this._object.close(params);
+  }
+  async killForTests(_, metadata) {
+    metadata.potentiallyClosesScope = true;
     await this._object.killForTests();
   }
   async defaultUserAgentForTest() {
@@ -76,7 +81,7 @@ class BrowserDispatcher extends _dispatcher.Dispatcher {
     if (!this._object.options.isChromium) throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object;
     return {
-      binary: await crBrowser.stopTracing()
+      artifact: _artifactDispatcher.ArtifactDispatcher.from(this, await crBrowser.stopTracing())
     };
   }
 }
@@ -109,6 +114,9 @@ class ConnectedBrowserDispatcher extends _dispatcher.Dispatcher {
   async newContextForReuse(params, metadata) {
     return await newContextForReuse(this._object, this, params, this.selectors, metadata);
   }
+  async stopPendingOperations(params, metadata) {
+    await this._object.stopPendingOperations(params.reason);
+  }
   async close() {
     // Client should not send us Browser.close.
   }
@@ -134,11 +142,13 @@ class ConnectedBrowserDispatcher extends _dispatcher.Dispatcher {
     if (!this._object.options.isChromium) throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object;
     return {
-      binary: await crBrowser.stopTracing()
+      artifact: _artifactDispatcher.ArtifactDispatcher.from(this, await crBrowser.stopTracing())
     };
   }
   async cleanupContexts() {
-    await Promise.all(Array.from(this._contexts).map(context => context.close((0, _instrumentation.serverSideCallMetadata)())));
+    await Promise.all(Array.from(this._contexts).map(context => context.close({
+      reason: 'Global context cleanup (connection terminated)'
+    })));
   }
 }
 exports.ConnectedBrowserDispatcher = ConnectedBrowserDispatcher;

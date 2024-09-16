@@ -28,11 +28,9 @@ var _stringUtils = require("./stringUtils");
  */
 
 function getByAttributeTextSelector(attrName, text, options) {
-  if (!(0, _stringUtils.isString)(text)) return `internal:attr=[${attrName}=${text}]`;
   return `internal:attr=[${attrName}=${(0, _stringUtils.escapeForAttributeSelector)(text, (options === null || options === void 0 ? void 0 : options.exact) || false)}]`;
 }
 function getByTestIdSelector(testIdAttributeName, testId) {
-  if (!(0, _stringUtils.isString)(testId)) return `internal:testid=[${testIdAttributeName}=${testId}]`;
   return `internal:testid=[${testIdAttributeName}=${(0, _stringUtils.escapeForAttributeSelector)(testId, true)}]`;
 }
 function getByLabelSelector(text, options) {
@@ -58,7 +56,7 @@ function getByRoleSelector(role, options = {}) {
   if (options.expanded !== undefined) props.push(['expanded', String(options.expanded)]);
   if (options.includeHidden !== undefined) props.push(['include-hidden', String(options.includeHidden)]);
   if (options.level !== undefined) props.push(['level', String(options.level)]);
-  if (options.name !== undefined) props.push(['name', (0, _stringUtils.isString)(options.name) ? (0, _stringUtils.escapeForAttributeSelector)(options.name, !!options.exact) : String(options.name)]);
+  if (options.name !== undefined) props.push(['name', (0, _stringUtils.escapeForAttributeSelector)(options.name, !!options.exact)]);
   if (options.pressed !== undefined) props.push(['pressed', String(options.pressed)]);
   return `internal:role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
 }

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.ScopedRace = exports.ManualPromise = void 0;
+exports.ManualPromise = exports.LongStandingScope = void 0;
 var _stackTrace = require("./stackTrace");
 let _Symbol$species, _Symbol$toStringTag;
 /**
@@ -57,29 +57,41 @@ class ManualPromise extends Promise {
   }
 }
 exports.ManualPromise = ManualPromise;
-class ScopedRace {
+class LongStandingScope {
   constructor() {
     this._terminateError = void 0;
+    this._closeError = void 0;
     this._terminatePromises = new Map();
+    this._isClosed = false;
   }
-  scopeClosed(error) {
+  reject(error) {
+    this._isClosed = true;
     this._terminateError = error;
-    for (const [p, e] of this._terminatePromises) {
-      (0, _stackTrace.rewriteErrorMessage)(e, error.message);
-      p.resolve(e);
-    }
+    for (const p of this._terminatePromises.keys()) p.resolve(error);
+  }
+  close(error) {
+    this._isClosed = true;
+    this._closeError = error;
+    for (const [p, frames] of this._terminatePromises) p.resolve(cloneError(error, frames));
+  }
+  isClosed() {
+    return this._isClosed;
+  }
+  static async raceMultiple(scopes, promise) {
+    return Promise.race(scopes.map(s => s.race(promise)));
   }
   async race(promise) {
-    return this._race([promise], false);
+    return this._race(Array.isArray(promise) ? promise : [promise], false);
   }
   async safeRace(promise, defaultValue) {
     return this._race([promise], true, defaultValue);
   }
   async _race(promises, safe, defaultValue) {
     const terminatePromise = new ManualPromise();
+    const frames = (0, _stackTrace.captureRawStack)();
     if (this._terminateError) terminatePromise.resolve(this._terminateError);
-    const error = new Error('');
-    this._terminatePromises.set(terminatePromise, error);
+    if (this._closeError) terminatePromise.resolve(cloneError(this._closeError, frames));
+    this._terminatePromises.set(terminatePromise, frames);
     try {
       return await Promise.race([terminatePromise.then(e => safe ? defaultValue : Promise.reject(e)), ...promises]);
     } finally {
@@ -87,4 +99,11 @@ class ScopedRace {
     }
   }
 }
-exports.ScopedRace = ScopedRace;
+exports.LongStandingScope = LongStandingScope;
+function cloneError(error, frames) {
+  const clone = new Error();
+  clone.name = error.name;
+  clone.message = error.message;
+  clone.stack = [error.name + ':' + error.message, ...frames].join('\n');
+  return clone;
+}

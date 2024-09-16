@@ -27,7 +27,7 @@ class Video {
     this._artifactReadyPromise = new _utils.ManualPromise();
     this._isRemote = false;
     this._isRemote = connection.isRemote();
-    this._artifact = page._closedOrCrashedRace.safeRace(this._artifactReadyPromise);
+    this._artifact = page._closedOrCrashedScope.safeRace(this._artifactReadyPromise);
   }
   _artifactReady(artifact) {
     this._artifactReadyPromise.resolve(artifact);
@@ -41,7 +41,7 @@ class Video {
   async saveAs(path) {
     const artifact = await this._artifact;
     if (!artifact) throw new Error('Page did not produce any video frames');
-    return artifact.saveAs(path);
+    return await artifact.saveAs(path);
   }
   async delete() {
     const artifact = await this._artifact;

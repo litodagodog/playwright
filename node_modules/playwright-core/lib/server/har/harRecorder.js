@@ -46,11 +46,12 @@ class HarRecorder {
       includeTraceInfo: false,
       recordRequestOverrides: true,
       waitForContentOnStop: true,
-      skipScripts: false,
       urlFilter: urlFilterRe !== null && urlFilterRe !== void 0 ? urlFilterRe : options.urlGlob
     });
     this._zipFile = content === 'attach' || expectsZip ? new _zipBundle.yazl.ZipFile() : null;
-    this._tracer.start();
+    this._tracer.start({
+      omitScripts: false
+    });
   }
   onEntryStarted(entry) {
     this._entries.push(entry);
